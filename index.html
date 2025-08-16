@@ -13,34 +13,15 @@
       height: 100vh; 
       display: flex; 
       flex-direction: column; 
+      background-color: #1a1a1a; 
       color: #fff; 
       overflow: hidden;
-      position: relative;
-    }
-    body::before { 
-      content: ''; 
-      position: absolute; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background: url('https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark') no-repeat center center/cover, 
-                  url('https://source.unsplash.com/random/1920x1080/?tech,abstract') no-repeat center center/cover;
-      background-blend-mode: overlay;
-      opacity: 0.3; 
-      z-index: -1;
-      animation: bgChange 15s infinite;
-    }
-    @keyframes bgChange {
-      0% { opacity: 0.3; }
-      50% { opacity: 0.5; }
-      100% { opacity: 0.3; }
     }
     nav { 
       background-color: #000; 
       padding: 10px; 
       display: flex; 
-      justify-content: flex-end; 
+      justify-content: space-between; 
       align-items: center; 
       position: fixed; 
       width: 100%; 
@@ -52,7 +33,6 @@
       color: #ff4b4b; 
       cursor: pointer; 
       font-size: 16px;
-      margin-left: 10px;
     }
     .menu-container {
       position: relative;
@@ -101,10 +81,32 @@
       cursor: pointer;
       color: #ff4b4b;
     }
+    .sidebar { 
+      position: fixed; 
+      left: 0; 
+      top: 50px; 
+      width: 200px; 
+      height: calc(100vh - 50px); 
+      background: #222; 
+      padding: 20px; 
+      overflow-y: auto; 
+      z-index: 5;
+      scroll-behavior: smooth; 
+    }
+    .sidebar button { 
+      display: block; 
+      width: 100%; 
+      margin: 10px 0; 
+      background: #333; 
+      color: #fff; 
+      padding: 10px; 
+      border: none; 
+      cursor: pointer;
+    }
     .container { 
       flex: 1; 
       display: flex; 
-      padding: 60px 20px 20px; 
+      padding: 60px 20px 20px 220px; 
       overflow: auto; 
       scroll-behavior: smooth;
     }
@@ -116,7 +118,7 @@
       display: block; 
     }
     .card { 
-      background: rgba(51, 51, 51, 0.8); 
+      background: #333; 
       border-radius: 8px; 
       padding: 15px; 
       margin: 10px; 
@@ -140,26 +142,9 @@
       border: 1px solid #ff4b4b; 
       padding: 10px; 
       margin: 10px 0; 
-      background: rgba(0, 0, 0, 0.5); 
       background-size: cover; 
       background-position: center; 
       position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-    .message {
-      max-width: 70%;
-      margin: 5px;
-      padding: 10px;
-      border-radius: 10px;
-    }
-    .user-message {
-      background-color: #ff4b4b;
-      align-self: flex-end;
-    }
-    .ai-message {
-      background-color: #333;
-      align-self: flex-start;
     }
     #3d-chat-bg { 
       position: absolute; 
@@ -206,11 +191,12 @@
       border-radius: 8px; 
       z-index: 20; 
       display: block;
-      transition: background-color 0.5s, opacity 0.5s;
+      transition: background-color 0.5s;
     }
     #login-form.success {
-      background-color: #00cc00; 
+      background-color: #00cc00; /* Green when successful */
       opacity: 0;
+      transition: background-color 0.5s, opacity 0.5s;
     }
     #signup-form { 
       display: none; 
@@ -239,12 +225,25 @@
       margin-right: 10px; 
       object-fit: cover;
     }
+    body::before { 
+      content: ''; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: url('https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark') no-repeat center center/cover; 
+      opacity: 0.3; 
+      z-index: -1;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
   <nav>
+    <button onclick="showTab('user')">User Mode</button>
+    <button onclick="showTab('admin')">Host Mode</button>
     <div class="menu-container">
       <div class="menu-button" onclick="toggleMenu()">
         <div class="dots">•••</div>
@@ -252,8 +251,6 @@
       </div>
       <div class="menu-dropdown" id="menu-dropdown">
         <span class="close-menu" onclick="toggleMenu(false)">❌</span>
-        <button onclick="switchMode('user')">User Mode</button>
-        <button onclick="switchMode('host')">Host Mode</button>
         <button onclick="showSection('home')">Home</button>
         <button onclick="showSection('previous-chats')">Previous Chats</button>
         <button onclick="showSection('my-models')">My Models</button>
@@ -263,6 +260,9 @@
       </div>
     </div>
   </nav>
+  <div class="sidebar">
+    <!-- Sidebar options moved to menu -->
+  </div>
   <div class="container">
     <div id="user" class="tab">
       <div id="home-section" class="section active">
@@ -270,7 +270,7 @@
           <span class="edit-pencil" onclick="editElement('home-card')">✏️</span>
           <h2>Welcome to AI Chat Platform</h2>
           <p>Inspired by CrushOn, SpicyChat, Talkie - Create and chat with custom AI models!</p>
-          <img src="https://source.unsplash.com/random/400x200/?ai,character" alt="Random AI Image" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
+          <img src="https://source.unsplash.com/random/400x200/?ai,character" alt="Random AI Image">
         </div>
         <div class="card">
           <h2>Published Models (Home Feed)</h2>
@@ -351,8 +351,8 @@
     <h2>Login</h2>
     <input id="login-uid" type="text" placeholder="Username (UID)">
     <input id="login-password" type="password" placeholder="Password">
-    <button id="login-btn">Login</button>
-    <button id="signup-btn">Signup</button>
+    <button onclick="showLoginFormAndCheck()">Login</button>
+    <button onclick="showSignupForm()">Signup</button>
     <p id="login-error" style="color: #ff4b4b; display: none;">Wrong UID or Password</p>
   </div>
 
@@ -360,79 +360,37 @@
     <h2>Signup</h2>
     <input id="signup-uid" type="text" placeholder="Create Username (UID)">
     <input id="signup-password" type="password" placeholder="Create Password">
-    <button id="signup-submit-btn">Signup</button>
-    <button id="signup-back-btn">Back to Login</button>
+    <button onclick="signup()">Signup</button>
+    <button onclick="showLoginForm()">Back to Login</button>
     <p id="signup-error" style="color: #ff4b4b; display: none;">UID already exists</p>
   </div>
 
   <script>
-    let currentUser = getData('currentUser') || null;
+    let currentUser = null;
     let currentChatModel = null;
-    let chatHistory = getData('chatHistory') || [];
+    let chatHistory = [];
     const globalStyles = getData('globalStyles') || {};
-    let users = getData('users') || []; // Initialize users from localStorage or empty array
+    const users = getData('users') || []; // Stored users for login
 
-    // Show login or platform on load
+    // Show login on load
     document.addEventListener('DOMContentLoaded', () => {
-      if (!currentUser) {
-        document.getElementById('login-form').style.display = 'block';
-        setupLoginForm();
-        setupSignupForm();
-      } else {
-        initAfterLogin();
-      }
+      document.getElementById('login-form').style.display = 'block';
       applyGlobalStyles();
-      showTab('user'); // Default to user mode
+      const urlParams = new URLSearchParams(window.location.search);
+      const role = urlParams.get('role') || 'user';
+      showTab(role);
+      if (role === 'host') {
+        document.querySelectorAll('.edit-pencil').forEach(p => p.style.display = 'block');
+      }
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.menu-container')) toggleMenu(false);
       });
     });
 
-    function setupLoginForm() {
-      const loginForm = document.getElementById('login-form');
-      loginForm.addEventListener('submit', (e) => e.preventDefault()); // Prevent default form submission
-      document.getElementById('login-btn').addEventListener('click', showLoginFormAndCheck);
-      document.getElementById('signup-btn').addEventListener('click', showSignupForm);
-      // Allow Enter key to trigger login
-      loginForm.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') showLoginFormAndCheck();
-      });
-    }
-
-    function setupSignupForm() {
-      const signupForm = document.getElementById('signup-form');
-      signupForm.addEventListener('submit', (e) => e.preventDefault()); // Prevent default form submission
-      document.getElementById('signup-submit-btn').addEventListener('click', signup);
-      document.getElementById('signup-back-btn').addEventListener('click', showLoginForm);
-      // Allow Enter key to trigger signup
-      signupForm.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') signup();
-      });
-    }
-
     // Menu toggle
     function toggleMenu(show = true) {
       const dropdown = document.getElementById('menu-dropdown');
       dropdown.classList.toggle('active', show);
-    }
-
-    // Mode switching
-    function switchMode(mode) {
-      if (mode === 'host') {
-        const uid = prompt('Enter Host UID:');
-        const password = prompt('Enter Host Password:');
-        if (uid === 'host_leader' && password === 'Akj@@8051964008') {
-          currentUser = { uid, role: 'host' };
-          saveData('currentUser', currentUser);
-          showTab('admin');
-        } else {
-          alert('Invalid Host credentials');
-          return;
-        }
-      } else {
-        showTab('user');
-      }
-      toggleMenu(false);
     }
 
     // Form switching
@@ -451,15 +409,9 @@
 
     // Signup function
     function signup() {
-      const uid = document.getElementById('signup-uid').value.trim();
-      const password = document.getElementById('signup-password').value.trim();
-      if (!uid || !password) {
-        document.getElementById('signup-error').innerText = 'UID and Password cannot be empty';
-        document.getElementById('signup-error').style.display = 'block';
-        return;
-      }
+      const uid = document.getElementById('signup-uid').value;
+      const password = document.getElementById('signup-password').value;
       if (users.find(u => u.uid === uid)) {
-        document.getElementById('signup-error').innerText = 'UID already exists';
         document.getElementById('signup-error').style.display = 'block';
         return;
       }
@@ -471,18 +423,10 @@
 
     // Login function
     function showLoginFormAndCheck() {
-      const uid = document.getElementById('login-uid').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      if (!uid || !password) {
-        document.getElementById('login-error').innerText = 'Please enter UID and Password';
-        document.getElementById('login-error').style.display = 'block';
-        return;
-      }
+      const uid = document.getElementById('login-uid').value;
+      const password = document.getElementById('login-password').value;
       const banned = getData('bannedUsers') || [];
-      if (banned.includes(uid)) {
-        alert('You are banned.');
-        return;
-      }
+      if (banned.includes(uid)) return alert('You are banned.');
 
       let isValid = false;
       if (uid === 'host_leader' && password === 'Akj@@8051964008') {
@@ -497,15 +441,15 @@
       }
 
       if (isValid) {
+        // Turn login form green and fade out
         const loginForm = document.getElementById('login-form');
         loginForm.classList.add('success');
         setTimeout(() => {
           loginForm.style.display = 'none';
           saveData('currentUser', currentUser);
           initAfterLogin();
-        }, 500);
+        }, 500); // Match transition duration
       } else {
-        document.getElementById('login-error').innerText = 'Wrong UID or Password';
         document.getElementById('login-error').style.display = 'block';
       }
     }
@@ -541,13 +485,13 @@
 
     // Local storage
     function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-    function getData(key) { return JSON.parse(localStorage.getItem(key)) || null; }
+    function getData(key) { return JSON.parse(localStorage.getItem(key)); }
 
     // Edit element
     function editElement(id) {
       if (currentUser.role !== 'host') return;
       const elem = document.getElementById(id);
-      const type = prompt('Edit type: text, image, background, title');
+      const type = prompt('Edit type: text, image, font');
       if (type === 'text') {
         const newText = prompt('New text:', elem.innerText);
         if (newText) {
@@ -556,28 +500,18 @@
           applyGlobalStyles();
         }
       } else if (type === 'image') {
-        const newImg = prompt('New image URL:') || 'https://source.unsplash.com/random/400x200/?ai,character';
-        const img = elem.querySelector('img');
-        if (img) {
-          img.src = newImg;
-          img.onload = () => img.style.opacity = 1;
-          img.style.opacity = 0;
-          img.style.transition = 'opacity 0.5s';
+        const newImg = prompt('New image URL:');
+        if (newImg) {
           globalStyles[id + '-img'] = newImg;
           saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
         }
-      } else if (type === 'background') {
-        const newBg = prompt('New background image URL:') || 'https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark';
-        document.body.style.backgroundImage = `url(${newBg})`;
-        globalStyles['body-bg'] = newBg;
-        saveData('globalStyles', globalStyles);
-      } else if (type === 'title') {
-        const newTitle = prompt('New title/announcement:', elem.querySelector('h2') ? elem.querySelector('h2').innerText : '');
-        if (newTitle) {
-          const title = elem.querySelector('h2') || elem;
-          title.innerText = newTitle;
-          globalStyles[id + '-title'] = newTitle;
+      } else if (type === 'font') {
+        const newFont = prompt('New font size/color (e.g., 20px red):');
+        if (newFont) {
+          globalStyles[id + '-font'] = newFont;
           saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
         }
       }
     }
@@ -587,21 +521,9 @@
         const [id, type] = key.split('-');
         const elem = document.getElementById(id);
         if (elem) {
-          if (type === 'text' && elem.innerText) elem.innerText = globalStyles[key];
-          if (type === 'img') {
-            const img = elem.querySelector('img');
-            if (img) {
-              img.src = globalStyles[key];
-              img.onload = () => img.style.opacity = 1;
-              img.style.opacity = 0;
-              img.style.transition = 'opacity 0.5s';
-            }
-          }
-          if (type === 'title') {
-            const title = elem.querySelector('h2') || elem;
-            title.innerText = globalStyles[key];
-          }
-          if (key === 'body-bg') document.body.style.backgroundImage = `url(${globalStyles[key]})`;
+          if (type === 'text') elem.innerText = globalStyles[key];
+          if (type === 'img') elem.querySelector('img').src = globalStyles[key];
+          if (type === 'font') elem.style.font = globalStyles[key];
         }
       }
     }
@@ -615,12 +537,12 @@
 
     // User functions
     function createAIModel() {
-      const name = document.getElementById('model-name').value.trim();
-      const desc = document.getElementById('model-desc').value.trim();
-      const personality = document.getElementById('model-personality').value.trim();
-      const traits = document.getElementById('model-traits').value.split(',').map(t => t.trim());
-      const category = document.getElementById('model-category').value.trim();
-      const tags = document.getElementById('model-tags').value.split(',').map(t => t.trim());
+      const name = document.getElementById('model-name').value;
+      const desc = document.getElementById('model-desc').value;
+      const personality = document.getElementById('model-personality').value;
+      const traits = document.getElementById('model-traits').value.split(',');
+      const category = document.getElementById('model-category').value;
+      const tags = document.getElementById('model-tags').value.split(',');
       const file = document.getElementById('model-image').files[0];
       let imageUrl = 'https://source.unsplash.com/random/100x100/?character';
       if (file) {
@@ -636,7 +558,6 @@
     }
 
     function addModel(name, desc, personality, traits, category, tags, imageUrl) {
-      if (!name || !desc) return alert('Name and description are required');
       let models = getData('userModels') || [];
       models.push({ name, desc, personality, traits, category, tags, imageUrl, published: false, likes: 0, creator: currentUser.uid });
       saveData('userModels', models);
@@ -658,8 +579,8 @@
       let models = getData('userModels') || [];
       models = models.filter(m => m.creator === currentUser.uid);
       document.getElementById('user-models').innerHTML = models.map(m => `
-        <div class="model-card" onclick="openChatPage('${m.name}')">
-          <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
+        <div class="model-card">
+          <img src="${m.imageUrl}" alt="${m.name}">
           <div>
             <h3>${m.name}</h3>
             <p>${m.desc}</p>
@@ -678,8 +599,8 @@
         let models = getData('userModels') || [];
         models = models.filter(m => m.published);
         document.getElementById('home-published-models').innerHTML = models.map(m => `
-          <div class="model-card" onclick="openChatPage('${m.name}')">
-            <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
+          <div class="model-card" onclick="startChatWithModel('${m.name}')">
+            <img src="${m.imageUrl}" alt="${m.name}">
             <div>
               <h3>${m.name} by ${m.creator}</h3>
               <p>${m.desc}</p>
@@ -696,8 +617,8 @@
       let models = getData('userModels') || [];
       models = models.filter(m => m.published);
       document.getElementById('published-models').innerHTML = models.map(m => `
-        <div class="model-card" onclick="openChatPage('${m.name}')">
-          <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
+        <div class="model-card" onclick="startChatWithModel('${m.name}')">
+          <img src="${m.imageUrl}" alt="${m.name}">
           <div>
             <h3>${m.name} by ${m.creator}</h3>
             <p>Likes: ${m.likes}</p>
@@ -707,61 +628,10 @@
       `).join('');
     }
 
-    function openChatPage(modelName) {
-      currentChatModel = modelName;
-      const chatWindow = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Chat with ${modelName}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #1a1a1a; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-            .chat-container { flex: 1; padding: 20px; overflow-y: auto; }
-            .message { max-width: 70%; margin: 5px; padding: 10px; border-radius: 10px; }
-            .user-message { background-color: #ff4b4b; align-self: flex-end; }
-            .ai-message { background-color: #333; align-self: flex-start; }
-            .input-area { padding: 10px; background: #000; }
-            input { width: 70%; padding: 8px; margin-right: 10px; }
-            button { padding: 8px 16px; }
-          </style>
-        </head>
-        <body>
-          <div class="chat-container" id="chat-content"></div>
-          <div class="input-area">
-            <input type="text" id="chat-input" placeholder="Type message...">
-            <button onclick="sendChatMessage()">Send</button>
-          </div>
-          <script>
-            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
-            function appendChatMessage(msg, isUser = false) {
-              const content = document.getElementById('chat-content');
-              const div = document.createElement('div');
-              div.className = 'message ' + (isUser ? 'user-message' : 'ai-message');
-              div.innerText = msg;
-              content.appendChild(div);
-              content.scrollTop = content.scrollHeight;
-            }
-            chatHistory.filter(h => h.model === '${modelName}').forEach(h => appendChatMessage(h.message, true));
-            function sendChatMessage() {
-              const input = document.getElementById('chat-input');
-              const message = input.value;
-              if (message) {
-                appendChatMessage('You: ' + message, true);
-                appendChatMessage('${modelName}: Mock response to "' + message + '"');
-                chatHistory.push({ model: '${modelName}', message: 'You: ' + message });
-                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-                input.value = '';
-              }
-            }
-          </script>
-        </body>
-        </html>
-      `;
-      const newWindow = window.open('', '_blank');
-      newWindow.document.write(chatWindow);
-      newWindow.document.close();
+    function startChatWithModel(name) {
+      currentChatModel = name;
+      document.getElementById('chat-window').innerHTML = '';
+      appendChatMessage(`Chatting with ${name}`);
     }
 
     function likeModel(name) {
@@ -779,7 +649,7 @@
       models = models.filter(m => m.published).sort((a, b) => b.likes - a.likes);
       document.getElementById('ranking-list').innerHTML = models.map(m => `
         <div class="model-card">
-          <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
+          <img src="${m.imageUrl}" alt="${m.name}">
           <h3>${m.name} by ${m.creator} - Likes: ${m.likes}</h3>
         </div>
       `).join('');
@@ -787,22 +657,19 @@
 
     function sendChatMessage() {
       const input = document.getElementById('chat-input');
-      const message = input.value.trim();
+      const message = input.value;
       if (message && currentChatModel) {
-        appendChatMessage('You: ' + message, true);
+        appendChatMessage('You: ' + message);
         appendChatMessage(`${currentChatModel}: Mock response to "${message}"`);
-        chatHistory.push({ model: currentChatModel, message: 'You: ' + message });
+        chatHistory.push({ model: currentChatModel, message });
         saveData('chatHistory', chatHistory);
         input.value = '';
       }
     }
 
-    function appendChatMessage(msg, isUser = false) {
+    function appendChatMessage(msg) {
       const window = document.getElementById('chat-window');
-      const div = document.createElement('div');
-      div.className = 'message ' + (isUser ? 'user-message' : 'ai-message');
-      div.innerText = msg;
-      window.appendChild(div);
+      window.innerHTML += `<p>${msg}</p>`;
       window.scrollTop = window.scrollHeight;
     }
 
@@ -815,10 +682,7 @@
       const file = document.getElementById('bg-image').files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
-          document.getElementById('chat-window').style.backgroundSize = 'cover';
-        };
+        reader.onload = (e) => document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
         reader.readAsDataURL(file);
       }
     }
@@ -845,7 +709,7 @@
               renderer.render(scene, camera);
             }
             animate();
-          }, undefined, () => alert('Error loading 3D model'));
+          });
           let user3d = getData('user3d') || [];
           user3d.push(e.target.result);
           saveData('user3d', user3d);
@@ -923,6 +787,7 @@
         const reader = new FileReader();
         reader.onload = (e) => {
           saveData('platform3d', e.target.result);
+          // Render if needed
         };
         reader.readAsDataURL(file);
       }
