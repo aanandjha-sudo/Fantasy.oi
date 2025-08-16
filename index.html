@@ -914,3 +914,837 @@
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Chatbot Platform - Inspired by CrushOn, SpicyChat, Talkie</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      width: 100vw; 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      background-color: #1a1a1a; 
+      color: #fff; 
+      overflow: hidden;
+      position: relative;
+    }
+    body::before { 
+      content: ''; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: url('https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark') no-repeat center center/cover; 
+      opacity: 0.3; 
+      z-index: -1;
+      transition: background-image 0.5s ease;
+    }
+    nav { 
+      background-color: #000; 
+      padding: 10px; 
+      display: flex; 
+      justify-content: flex-end; 
+      align-items: center; 
+      position: fixed; 
+      width: 100%; 
+      z-index: 10;
+    }
+    nav button { 
+      background: none; 
+      border: none; 
+      color: #ff4b4b; 
+      cursor: pointer; 
+      font-size: 16px;
+    }
+    .menu-container {
+      position: relative;
+    }
+    .menu-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .dots {
+      font-size: 24px;
+      line-height: 1;
+    }
+    .menu-text {
+      font-size: 10px;
+    }
+    .menu-dropdown {
+      position: absolute;
+      right: 0;
+      top: 40px;
+      background: #222;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+      z-index: 20;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .menu-dropdown.active {
+      display: block;
+    }
+    .menu-dropdown button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #fff;
+      padding: 5px;
+      cursor: pointer;
+    }
+    .close-menu {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      cursor: pointer;
+      color: #ff4b4b;
+    }
+    .container { 
+      flex: 1; 
+      display: flex; 
+      padding: 60px 20px 20px; 
+      overflow: auto; 
+      scroll-behavior: smooth;
+    }
+    .tab { 
+      display: none; 
+      width: 100%; 
+    }
+    .active { 
+      display: block; 
+    }
+    .card { 
+      background: #333; 
+      border-radius: 8px; 
+      padding: 15px; 
+      margin: 10px; 
+      box-shadow: 0 2px 5px rgba(255,0,0,0.2); 
+      position: relative;
+    }
+    .edit-pencil { 
+      position: absolute; 
+      top: 5px; 
+      right: 5px; 
+      cursor: pointer; 
+      color: #ff4b4b; 
+      display: none;
+    }
+    .editable:hover .edit-pencil { 
+      display: block; 
+    }
+    #chat-window { 
+      height: 500px; 
+      overflow-y: scroll; 
+      border: 1px solid #ff4b4b; 
+      padding: 10px; 
+      margin: 10px 0; 
+      background-size: cover; 
+      background-position: center; 
+      position: relative;
+    }
+    #3d-chat-bg { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      z-index: -1; 
+    }
+    .loading { 
+      text-align: center; 
+      padding: 20px; 
+      color: #ff4b4b; 
+      animation: spin 1s linear infinite; 
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    button { 
+      background-color: #ff4b4b; 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      margin: 5px; 
+    }
+    input, select { 
+      padding: 8px; 
+      margin: 5px; 
+      border: 1px solid #ff4b4b; 
+      border-radius: 4px; 
+      background: #222; 
+      color: #fff;
+    }
+    #login-form { 
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      background: #333; 
+      padding: 20px; 
+      border-radius: 8px; 
+      z-index: 20; 
+      display: block;
+      transition: background-color 0.5s;
+    }
+    #login-form.success {
+      background-color: #00cc00; /* Green when successful */
+      opacity: 0;
+      transition: background-color 0.5s, opacity 0.5s;
+    }
+    #signup-form { 
+      display: none; 
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      background: #333; 
+      padding: 20px; 
+      border-radius: 8px; 
+      z-index: 20; 
+    }
+    .model-card { 
+      display: flex; 
+      align-items: center; 
+      margin: 10px; 
+      padding: 10px; 
+      background: #444; 
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .model-card img { 
+      width: 100px; 
+      height: 100px; 
+      border-radius: 50%; 
+      margin-right: 10px; 
+      object-fit: cover;
+    }
+    /* Chat Window Style for Reference (Handled in chat.html) */
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="menu-container">
+      <div class="menu-button" onclick="toggleMenu()">
+        <div class="dots">•••</div>
+        <div class="menu-text">menu</div>
+      </div>
+      <div class="menu-dropdown" id="menu-dropdown">
+        <span class="close-menu" onclick="toggleMenu(false)">❌</span>
+        <button onclick="switchMode('user')">User Mode</button>
+        <button onclick="switchMode('host')">Host Mode</button>
+        <button onclick="showSection('home')">Home</button>
+        <button onclick="showSection('previous-chats')">Previous Chats</button>
+        <button onclick="showSection('my-models')">My Models</button>
+        <button onclick="showSection('3d-models')">My 3D Models</button>
+        <button onclick="showSection('rankings')">Rankings</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+  <div class="container">
+    <div id="user" class="tab">
+      <div id="home-section" class="section active">
+        <div class="card editable" id="home-card">
+          <span class="edit-pencil" onclick="editElement('home-card')">✏️</span>
+          <h2>Welcome to AI Chat Platform</h2>
+          <p>Inspired by CrushOn, SpicyChat, Talkie - Create and chat with custom AI models!</p>
+          <img src="https://source.unsplash.com/random/400x200/?ai,character" alt="Random AI Image">
+        </div>
+        <div class="card">
+          <h2>Published Models (Home Feed)</h2>
+          <div id="home-published-models" class="loading">Loading...</div>
+        </div>
+        <div class="card">
+          <h2>Create AI Model</h2>
+          <input id="model-name" type="text" placeholder="Model Name">
+          <input id="model-desc" type="text" placeholder="Description">
+          <input id="model-personality" type="text" placeholder="Personality (e.g., friendly, sassy)">
+          <input id="model-traits" type="text" placeholder="Traits (comma-separated)">
+          <input id="model-category" type="text" placeholder="Category (e.g., anime, roleplay)">
+          <input id="model-tags" type="text" placeholder="Tags (comma-separated)">
+          <input id="model-image" type="file" accept="image/*">
+          <button onclick="createAIModel()">Create</button>
+        </div>
+        <div class="card">
+          <h2>Chat with Selected Model</h2>
+          <div id="chat-window" style="position: relative;">
+            <div id="3d-chat-bg"></div>
+          </div>
+          <input id="chat-input" type="text" placeholder="Type message...">
+          <button onclick="sendChatMessage()">Send</button>
+          <input id="bg-image" type="file" accept="image/*">
+          <button onclick="setChatBackgroundImage()">Set Image Background</button>
+          <input id="bg-3d" type="file" accept=".glb,.gltf">
+          <button onclick="setChatBackground3D()">Set 3D Background</button>
+          <input id="wallpaper-image" type="file" accept="image/*">
+          <button onclick="setWallpaperBackground()">Set Wallpaper Background</button>
+        </div>
+        <div class="card">
+          <button onclick="showPayment('donate')">Donate</button>
+          <button onclick="showPayment('subscribe')">Subscribe</button>
+          <div id="payment-details" style="display: none;"></div>
+        </div>
+      </div>
+      <div id="previous-chats-section" class="section" style="display: none;">
+        <h2>Previous Chats</h2>
+        <div id="previous-chats"></div>
+      </div>
+      <div id="my-models-section" class="section" style="display: none;">
+        <h2>My Models</h2>
+        <div id="user-models"></div>
+        <button onclick="publishAIModel()">Publish Selected</button>
+      </div>
+      <div id="3d-models-section" class="section" style="display: none;">
+        <h2>My 3D Models</h2>
+        <div id="user-3d-models"></div>
+      </div>
+      <div id="rankings-section" class="section" style="display: none;">
+        <h2>Rankings</h2>
+        <div id="ranking-list"></div>
+      </div>
+    </div>
+
+    <div id="admin" class="tab">
+      <div class="card">
+        <h2>Host Settings</h2>
+        <input id="ai-api-key" type="text" placeholder="Connect AI API Key (e.g., Grok/OpenAI)">
+        <button onclick="connectAI()">Connect AI</button>
+        <input id="upi-id" type="text" placeholder="UPI ID (e.g., user@upi)">
+        <input id="upi-qr" type="file" accept="image/*">
+        <button onclick="savePaymentDetails()">Save Payment Details</button>
+      </div>
+      <div class="card">
+        <h2>Admin Management</h2>
+        <input id="ban-user" type="text" placeholder="Ban User (username)">
+        <button onclick="banUser()">Ban</button>
+        <button onclick="resetChanges()">Reset All Changes</button>
+      </div>
+      <div class="card">
+        <h2>Customize User Page</h2>
+        <p>Edits apply globally. Use pencil icons on user page in host mode.</p>
+      </div>
+      <div id="admin-info" class="card"></div>
+    </div>
+  </div>
+
+  <div id="login-form">
+    <h2>Login</h2>
+    <input id="login-uid" type="text" placeholder="Username (UID)">
+    <input id="login-password" type="password" placeholder="Password">
+    <button onclick="showLoginFormAndCheck()">Login</button>
+    <button onclick="showSignupForm()">Signup</button>
+    <p id="login-error" style="color: #ff4b4b; display: none;">Wrong UID or Password</p>
+  </div>
+
+  <div id="signup-form">
+    <h2>Signup</h2>
+    <input id="signup-uid" type="text" placeholder="Create Username (UID)">
+    <input id="signup-password" type="password" placeholder="Create Password">
+    <button onclick="signup()">Signup</button>
+    <button onclick="showLoginForm()">Back to Login</button>
+    <p id="signup-error" style="color: #ff4b4b; display: none;">UID already exists</p>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentChatModel = null;
+    let chatHistory = [];
+    const globalStyles = getData('globalStyles') || {};
+    const users = getData('users') || [];
+
+    // Show login on load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('login-form').style.display = 'block';
+      applyGlobalStyles();
+      const urlParams = new URLSearchParams(window.location.search);
+      const role = urlParams.get('role') || 'user';
+      showTab(role);
+      if (role === 'host') {
+        document.querySelectorAll('.edit-pencil').forEach(p => p.style.display = 'block');
+      }
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.menu-container')) toggleMenu(false);
+      });
+    });
+
+    // Menu toggle
+    function toggleMenu(show = true) {
+      const dropdown = document.getElementById('menu-dropdown');
+      dropdown.classList.toggle('active', show);
+    }
+
+    // Mode switching
+    function switchMode(mode) {
+      if (!currentUser) return alert('Please log in first.');
+      if (mode === 'host') {
+        const uid = prompt('Enter Host UID:');
+        const password = prompt('Enter Host Password:');
+        if (uid === 'host_leader' && password === 'Akj@@8051964008') {
+          currentUser = { uid, role: 'host' };
+          saveData('currentUser', currentUser);
+          showTab('admin');
+          document.querySelectorAll('.edit-pencil').forEach(p => p.style.display = 'block');
+        } else {
+          alert('Invalid Host credentials');
+          return;
+        }
+      } else {
+        if (currentUser && currentUser.role === 'host') {
+          currentUser = { uid: currentUser.uid, role: 'user' };
+          saveData('currentUser', currentUser);
+        }
+        showTab('user');
+        document.querySelectorAll('.edit-pencil').forEach(p => p.style.display = 'none');
+      }
+      toggleMenu(false);
+    }
+
+    // Form switching
+    function showLoginForm() {
+      document.getElementById('login-form').style.display = 'block';
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('login-form').classList.remove('success');
+    }
+
+    function showSignupForm() {
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('signup-form').style.display = 'block';
+      document.getElementById('signup-error').style.display = 'none';
+    }
+
+    // Signup function
+    function signup() {
+      const uid = document.getElementById('signup-uid').value;
+      const password = document.getElementById('signup-password').value;
+      if (users.find(u => u.uid === uid)) {
+        document.getElementById('signup-error').style.display = 'block';
+        return;
+      }
+      users.push({ uid, password });
+      saveData('users', users);
+      alert('Signup successful! Please login.');
+      showLoginForm();
+    }
+
+    // Login function
+    function showLoginFormAndCheck() {
+      const uid = document.getElementById('login-uid').value;
+      const password = document.getElementById('login-password').value;
+      const banned = getData('bannedUsers') || [];
+      if (banned.includes(uid)) return alert('You are banned.');
+
+      let isValid = false;
+      if (uid === 'host_leader' && password === 'Akj@@8051964008') {
+        isValid = true;
+        currentUser = { uid, role: 'host' };
+      } else {
+        const user = users.find(u => u.uid === uid && u.password === password);
+        if (user) {
+          isValid = true;
+          currentUser = { uid, role: 'user' };
+        }
+      }
+
+      if (isValid) {
+        const loginForm = document.getElementById('login-form');
+        loginForm.classList.add('success');
+        setTimeout(() => {
+          loginForm.style.display = 'none';
+          saveData('currentUser', currentUser);
+          initAfterLogin();
+        }, 500);
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      saveData('currentUser', null);
+      location.reload();
+    }
+
+    function initAfterLogin() {
+      updateUserModels();
+      updateHomePublishedModels();
+      updatePublishedModels();
+      updatePreviousChats();
+      updateUser3DModels();
+      updateRanking();
+      updateAdminInfo();
+      render3DModel();
+      document.getElementById('home-published-models').classList.remove('loading');
+    }
+
+    // Tab and section switching
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+    }
+
+    function showSection(section) {
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      document.getElementById(section + '-section').style.display = 'block';
+    }
+
+    // Local storage
+    function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function getData(key) { return JSON.parse(localStorage.getItem(key)) || null; }
+
+    // Edit element
+    function editElement(id) {
+      if (currentUser.role !== 'host') return;
+      const elem = document.getElementById(id);
+      const type = prompt('Edit type: text, image, font');
+      if (type === 'text') {
+        const newText = prompt('New text:', elem.innerText);
+        if (newText) {
+          globalStyles[id + '-text'] = newText;
+          saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
+        }
+      } else if (type === 'image') {
+        const newImg = prompt('New image URL:') || 'https://source.unsplash.com/random/400x200/?ai,character';
+        if (newImg) {
+          const img = elem.querySelector('img');
+          if (img) img.src = newImg;
+          globalStyles[id + '-img'] = newImg;
+          saveData('globalStyles', globalStyles);
+        }
+      } else if (type === 'font') {
+        const newFont = prompt('New font size/color (e.g., 20px red):');
+        if (newFont) {
+          globalStyles[id + '-font'] = newFont;
+          saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
+        }
+      }
+    }
+
+    function applyGlobalStyles() {
+      for (let key in globalStyles) {
+        const [id, type] = key.split('-');
+        const elem = document.getElementById(id);
+        if (elem) {
+          if (type === 'text') elem.innerText = globalStyles[key];
+          if (type === 'img') {
+            const img = elem.querySelector('img');
+            if (img) img.src = globalStyles[key];
+          }
+          if (type === 'font') elem.style.font = globalStyles[key];
+        }
+      }
+    }
+
+    function resetChanges() {
+      if (currentUser.role === 'host') {
+        saveData('globalStyles', {});
+        location.reload();
+      }
+    }
+
+    // User functions
+    function createAIModel() {
+      const name = document.getElementById('model-name').value;
+      const desc = document.getElementById('model-desc').value;
+      const personality = document.getElementById('model-personality').value;
+      const traits = document.getElementById('model-traits').value.split(',');
+      const category = document.getElementById('model-category').value;
+      const tags = document.getElementById('model-tags').value.split(',');
+      const file = document.getElementById('model-image').files[0];
+      let imageUrl = 'https://source.unsplash.com/random/100x100/?character';
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imageUrl = e.target.result;
+          addModel(name, desc, personality, traits, category, tags, imageUrl);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        addModel(name, desc, personality, traits, category, tags, imageUrl);
+      }
+    }
+
+    function addModel(name, desc, personality, traits, category, tags, imageUrl) {
+      let models = getData('userModels') || [];
+      models.push({ name, desc, personality, traits, category, tags, imageUrl, published: false, likes: 0, creator: currentUser.uid });
+      saveData('userModels', models);
+      updateUserModels();
+    }
+
+    function publishAIModel() {
+      let models = getData('userModels') || [];
+      const toPublish = prompt('Enter model name to publish:');
+      const model = models.find(m => m.name === toPublish && m.creator === currentUser.uid);
+      if (model) model.published = true;
+      saveData('userModels', models);
+      updateUserModels();
+      updateHomePublishedModels();
+      updatePublishedModels();
+    }
+
+    function updateUserModels() {
+      let models = getData('userModels') || [];
+      models = models.filter(m => m.creator === currentUser.uid);
+      document.getElementById('user-models').innerHTML = models.map(m => `
+        <div class="model-card" onclick="startChatWithModel('${m.name}')">
+          <img src="${m.imageUrl}" alt="${m.name}">
+          <div>
+            <h3>${m.name}</h3>
+            <p>${m.desc}</p>
+            <p>Personality: ${m.personality}</p>
+            <p>Category: ${m.category}</p>
+            <p>Tags: ${m.tags.join(', ')}</p>
+            <p>${m.published ? 'Published' : 'Draft'}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateHomePublishedModels() {
+      document.getElementById('home-published-models').classList.add('loading');
+      setTimeout(() => { 
+        let models = getData('userModels') || [];
+        models = models.filter(m => m.published);
+        document.getElementById('home-published-models').innerHTML = models.map(m => `
+          <div class="model-card" onclick="startChatWithModel('${m.name}')">
+            <img src="${m.imageUrl}" alt="${m.name}">
+            <div>
+              <h3>${m.name} by ${m.creator}</h3>
+              <p>${m.desc}</p>
+              <p>Likes: ${m.likes}</p>
+              <button onclick="event.stopPropagation(); likeModel('${m.name}')">Like</button>
+            </div>
+          </div>
+        `).join('');
+        document.getElementById('home-published-models').classList.remove('loading');
+      }, 1000); 
+    }
+
+    function updatePublishedModels() {
+      let models = getData('userModels') || [];
+      models = models.filter(m => m.published);
+      document.getElementById('published-models').innerHTML = models.map(m => `
+        <div class="model-card" onclick="startChatWithModel('${m.name}')">
+          <img src="${m.imageUrl}" alt="${m.name}">
+          <div>
+            <h3>${m.name} by ${m.creator}</h3>
+            <p>Likes: ${m.likes}</p>
+            <button onclick="event.stopPropagation(); likeModel('${m.name}')">Like</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function startChatWithModel(modelName) {
+      if (!currentUser) return alert('Please log in to chat.');
+      window.location.href = `chat.html?model=${encodeURIComponent(modelName)}`;
+    }
+
+    function likeModel(name) {
+      let models = getData('userModels') || [];
+      const model = models.find(m => m.name === name);
+      if (model) model.likes++;
+      saveData('userModels', models);
+      updateHomePublishedModels();
+      updatePublishedModels();
+      updateRanking();
+    }
+
+    function updateRanking() {
+      let models = getData('userModels') || [];
+      models = models.filter(m => m.published).sort((a, b) => b.likes - a.likes);
+      document.getElementById('ranking-list').innerHTML = models.map(m => `
+        <div class="model-card">
+          <img src="${m.imageUrl}" alt="${m.name}">
+          <h3>${m.name} by ${m.creator} - Likes: ${m.likes}</h3>
+        </div>
+      `).join('');
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value;
+      if (message && currentChatModel) {
+        appendChatMessage('You: ' + message);
+        appendChatMessage(`${currentChatModel}: Mock response to "${message}"`);
+        chatHistory.push({ model: currentChatModel, message });
+        saveData('chatHistory', chatHistory);
+        input.value = '';
+      }
+    }
+
+    function appendChatMessage(msg) {
+      const window = document.getElementById('chat-window');
+      window.innerHTML += `<p>${msg}</p>`;
+      window.scrollTop = window.scrollHeight;
+    }
+
+    function updatePreviousChats() {
+      chatHistory = getData('chatHistory') || [];
+      document.getElementById('previous-chats').innerHTML = chatHistory.map(h => `<p>With ${h.model}: ${h.message}</p>`).join('');
+    }
+
+    function setChatBackgroundImage() {
+      const file = document.getElementById('bg-image').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
+        reader.readAsDataURL(file);
+      } else {
+        alert('File upload not supported. Using default background.');
+        document.getElementById('chat-window').style.backgroundImage = `url('https://source.unsplash.com/random/400x400/?chat')`;
+      }
+    }
+
+    function setChatBackground3D() {
+      const file = document.getElementById('bg-3d').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const container = document.getElementById('3d-chat-bg');
+          container.innerHTML = '';
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+          const renderer = new THREE.WebGLRenderer({ alpha: true });
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          container.appendChild(renderer.domElement);
+          const loader = new THREE.GLTFLoader();
+          loader.load(e.target.result, (gltf) => {
+            scene.add(gltf.scene);
+            camera.position.z = 5;
+            function animate() {
+              requestAnimationFrame(animate);
+              gltf.scene.rotation.y += 0.01;
+              renderer.render(scene, camera);
+            }
+            animate();
+          }, undefined, () => alert('Error loading 3D model'));
+          let user3d = getData('user3d') || [];
+          user3d.push(e.target.result);
+          saveData('user3d', user3d);
+          updateUser3DModels();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('3D file upload not supported on GitHub Pages.');
+      }
+    }
+
+    function updateUser3DModels() {
+      let user3d = getData('user3d') || [];
+      document.getElementById('user-3d-models').innerHTML = user3d.map((url, i) => `<p>3D Model ${i+1} <button onclick="loadUser3D('${url}')">Load</button></p>`).join('');
+    }
+
+    function loadUser3D(url) {
+      alert('Loading 3D model preview...');
+    }
+
+    function showPayment(type) {
+      const upiId = getData('upiId');
+      const upiQr = getData('upiQr');
+      document.getElementById('payment-details').innerHTML = `
+        <p>${type.charAt(0).toUpperCase() + type.slice(1)} via UPI</p>
+        <p>UPI ID: ${upiId || 'Not set'}</p>
+        ${upiQr ? `<img src="${upiQr}" width="150" alt="QR Code">` : ''}
+      `;
+      document.getElementById('payment-details').style.display = 'block';
+    }
+
+    // New Wallpaper Background Function
+    function setWallpaperBackground() {
+      const file = document.getElementById('wallpaper-image').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.body.style.backgroundImage = `url(${e.target.result})`;
+          saveData('wallpaperBackground', e.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('File upload not supported on GitHub Pages. Using default background.');
+        document.body.style.backgroundImage = `url('https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark')`;
+      }
+    }
+
+    // Host functions
+    function connectAI() {
+      const apiKey = document.getElementById('ai-api-key').value;
+      if (apiKey && currentUser.role === 'host') {
+        saveData('aiApiKey', apiKey);
+        alert('AI API connected successfully!');
+      }
+    }
+
+    function savePaymentDetails() {
+      if (currentUser.role !== 'host') return;
+      const upiId = document.getElementById('upi-id').value;
+      const qrFile = document.getElementById('upi-qr').files[0];
+      if (upiId) saveData('upiId', upiId);
+      if (qrFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => saveData('upiQr', e.target.result);
+        reader.readAsDataURL(qrFile);
+      }
+      updateAdminInfo();
+    }
+
+    function banUser() {
+      if (currentUser.role !== 'host') return;
+      const username = document.getElementById('ban-user').value;
+      if (username) {
+        let banned = getData('bannedUsers') || [];
+        if (!banned.includes(username)) {
+          banned.push(username);
+          saveData('bannedUsers', banned);
+          alert(`${username} has been banned.`);
+        } else {
+          alert(`${username} is already banned.`);
+        }
+      }
+    }
+
+    function updateAdminInfo() {
+      if (currentUser.role !== 'host') return;
+      const upiId = getData('upiId');
+      const upiQr = getData('upiQr');
+      const banned = getData('bannedUsers') || [];
+      document.getElementById('admin-info').innerHTML = `
+        <p>UPI ID: ${upiId || 'None'}</p>
+        ${upiQr ? `<img src="${upiQr}" width="100" alt="UPI QR">` : ''}
+        <p>Banned Users: ${banned.join(', ') || 'None'}</p>
+      `;
+    }
+
+    function add3DModel() {
+      if (currentUser.role !== 'host') return;
+      const file = document.getElementById('3d-model').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          saveData('platform3d', e.target.result);
+          alert('3D model added successfully!');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script>
+</body>
+</html>
