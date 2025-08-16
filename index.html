@@ -13,15 +13,34 @@
       height: 100vh; 
       display: flex; 
       flex-direction: column; 
-      background-color: #1a1a1a; 
       color: #fff; 
       overflow: hidden;
+      position: relative;
+    }
+    body::before { 
+      content: ''; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: url('https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark') no-repeat center center/cover, 
+                  url('https://source.unsplash.com/random/1920x1080/?tech,abstract') no-repeat center center/cover;
+      background-blend-mode: overlay;
+      opacity: 0.3; 
+      z-index: -1;
+      animation: bgChange 15s infinite;
+    }
+    @keyframes bgChange {
+      0% { opacity: 0.3; }
+      50% { opacity: 0.5; }
+      100% { opacity: 0.3; }
     }
     nav { 
       background-color: #000; 
       padding: 10px; 
       display: flex; 
-      justify-content: space-between; 
+      justify-content: flex-end; 
       align-items: center; 
       position: fixed; 
       width: 100%; 
@@ -33,6 +52,7 @@
       color: #ff4b4b; 
       cursor: pointer; 
       font-size: 16px;
+      margin-left: 10px;
     }
     .menu-container {
       position: relative;
@@ -81,32 +101,10 @@
       cursor: pointer;
       color: #ff4b4b;
     }
-    .sidebar { 
-      position: fixed; 
-      left: 0; 
-      top: 50px; 
-      width: 200px; 
-      height: calc(100vh - 50px); 
-      background: #222; 
-      padding: 20px; 
-      overflow-y: auto; 
-      z-index: 5;
-      scroll-behavior: smooth; 
-    }
-    .sidebar button { 
-      display: block; 
-      width: 100%; 
-      margin: 10px 0; 
-      background: #333; 
-      color: #fff; 
-      padding: 10px; 
-      border: none; 
-      cursor: pointer;
-    }
     .container { 
       flex: 1; 
       display: flex; 
-      padding: 60px 20px 20px 220px; 
+      padding: 60px 20px 20px; 
       overflow: auto; 
       scroll-behavior: smooth;
     }
@@ -118,7 +116,7 @@
       display: block; 
     }
     .card { 
-      background: #333; 
+      background: rgba(51, 51, 51, 0.8); /* Semi-transparent for background visibility */
       border-radius: 8px; 
       padding: 15px; 
       margin: 10px; 
@@ -142,9 +140,26 @@
       border: 1px solid #ff4b4b; 
       padding: 10px; 
       margin: 10px 0; 
+      background: rgba(0, 0, 0, 0.5); /* Dark semi-transparent */
       background-size: cover; 
       background-position: center; 
       position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      max-width: 70%;
+      margin: 5px;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .user-message {
+      background-color: #ff4b4b;
+      align-self: flex-end;
+    }
+    .ai-message {
+      background-color: #333;
+      align-self: flex-start;
     }
     #3d-chat-bg { 
       position: absolute; 
@@ -191,12 +206,11 @@
       border-radius: 8px; 
       z-index: 20; 
       display: block;
-      transition: background-color 0.5s;
+      transition: background-color 0.5s, opacity 0.5s;
     }
     #login-form.success {
-      background-color: #00cc00; /* Green when successful */
+      background-color: #00cc00; 
       opacity: 0;
-      transition: background-color 0.5s, opacity 0.5s;
     }
     #signup-form { 
       display: none; 
@@ -225,25 +239,12 @@
       margin-right: 10px; 
       object-fit: cover;
     }
-    body::before { 
-      content: ''; 
-      position: absolute; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background: url('https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark') no-repeat center center/cover; 
-      opacity: 0.3; 
-      z-index: -1;
-    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
   <nav>
-    <button onclick="showTab('user')">User Mode</button>
-    <button onclick="showTab('admin')">Host Mode</button>
     <div class="menu-container">
       <div class="menu-button" onclick="toggleMenu()">
         <div class="dots">•••</div>
@@ -251,6 +252,8 @@
       </div>
       <div class="menu-dropdown" id="menu-dropdown">
         <span class="close-menu" onclick="toggleMenu(false)">❌</span>
+        <button onclick="switchMode('user')">User Mode</button>
+        <button onclick="switchMode('host')">Host Mode</button>
         <button onclick="showSection('home')">Home</button>
         <button onclick="showSection('previous-chats')">Previous Chats</button>
         <button onclick="showSection('my-models')">My Models</button>
@@ -260,9 +263,6 @@
       </div>
     </div>
   </nav>
-  <div class="sidebar">
-    <!-- Sidebar options moved to menu -->
-  </div>
   <div class="container">
     <div id="user" class="tab">
       <div id="home-section" class="section active">
@@ -376,12 +376,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-form').style.display = 'block';
       applyGlobalStyles();
-      const urlParams = new URLSearchParams(window.location.search);
-      const role = urlParams.get('role') || 'user';
-      showTab(role);
-      if (role === 'host') {
-        document.querySelectorAll('.edit-pencil').forEach(p => p.style.display = 'block');
-      }
+      showTab('user'); // Default to user mode on load
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.menu-container')) toggleMenu(false);
       });
@@ -391,6 +386,25 @@
     function toggleMenu(show = true) {
       const dropdown = document.getElementById('menu-dropdown');
       dropdown.classList.toggle('active', show);
+    }
+
+    // Mode switching
+    function switchMode(mode) {
+      if (mode === 'host') {
+        const uid = prompt('Enter Host UID:');
+        const password = prompt('Enter Host Password:');
+        if (uid === 'host_leader' && password === 'Akj@@8051964008') {
+          currentUser = { uid, role: 'host' };
+          saveData('currentUser', currentUser);
+          showTab('admin');
+        } else {
+          alert('Invalid Host credentials');
+          return;
+        }
+      } else {
+        showTab('user');
+      }
+      toggleMenu(false);
     }
 
     // Form switching
@@ -441,14 +455,13 @@
       }
 
       if (isValid) {
-        // Turn login form green and fade out
         const loginForm = document.getElementById('login-form');
         loginForm.classList.add('success');
         setTimeout(() => {
           loginForm.style.display = 'none';
           saveData('currentUser', currentUser);
           initAfterLogin();
-        }, 500); // Match transition duration
+        }, 500);
       } else {
         document.getElementById('login-error').style.display = 'block';
       }
@@ -491,7 +504,7 @@
     function editElement(id) {
       if (currentUser.role !== 'host') return;
       const elem = document.getElementById(id);
-      const type = prompt('Edit type: text, image, font');
+      const type = prompt('Edit type: text, image, background, title');
       if (type === 'text') {
         const newText = prompt('New text:', elem.innerText);
         if (newText) {
@@ -502,16 +515,26 @@
       } else if (type === 'image') {
         const newImg = prompt('New image URL:');
         if (newImg) {
+          const img = elem.querySelector('img');
+          if (img) img.src = newImg;
           globalStyles[id + '-img'] = newImg;
           saveData('globalStyles', globalStyles);
           applyGlobalStyles();
         }
-      } else if (type === 'font') {
-        const newFont = prompt('New font size/color (e.g., 20px red):');
-        if (newFont) {
-          globalStyles[id + '-font'] = newFont;
+      } else if (type === 'background') {
+        const newBg = prompt('New background image URL:');
+        if (newBg) {
+          document.body.style.backgroundImage = `url(${newBg})`;
+          globalStyles['body-bg'] = newBg;
           saveData('globalStyles', globalStyles);
-          applyGlobalStyles();
+        }
+      } else if (type === 'title') {
+        const newTitle = prompt('New title/announcement:', elem.querySelector('h2') ? elem.querySelector('h2').innerText : '');
+        if (newTitle) {
+          const title = elem.querySelector('h2') || elem;
+          title.innerText = newTitle;
+          globalStyles[id + '-title'] = newTitle;
+          saveData('globalStyles', globalStyles);
         }
       }
     }
@@ -521,9 +544,16 @@
         const [id, type] = key.split('-');
         const elem = document.getElementById(id);
         if (elem) {
-          if (type === 'text') elem.innerText = globalStyles[key];
-          if (type === 'img') elem.querySelector('img').src = globalStyles[key];
-          if (type === 'font') elem.style.font = globalStyles[key];
+          if (type === 'text' && elem.innerText) elem.innerText = globalStyles[key];
+          if (type === 'img') {
+            const img = elem.querySelector('img');
+            if (img) img.src = globalStyles[key];
+          }
+          if (type === 'title') {
+            const title = elem.querySelector('h2') || elem;
+            title.innerText = globalStyles[key];
+          }
+          if (key === 'body-bg') document.body.style.backgroundImage = `url(${globalStyles[key]})`;
         }
       }
     }
@@ -579,7 +609,7 @@
       let models = getData('userModels') || [];
       models = models.filter(m => m.creator === currentUser.uid);
       document.getElementById('user-models').innerHTML = models.map(m => `
-        <div class="model-card">
+        <div class="model-card" onclick="openChatPage('${m.name}')">
           <img src="${m.imageUrl}" alt="${m.name}">
           <div>
             <h3>${m.name}</h3>
@@ -599,7 +629,7 @@
         let models = getData('userModels') || [];
         models = models.filter(m => m.published);
         document.getElementById('home-published-models').innerHTML = models.map(m => `
-          <div class="model-card" onclick="startChatWithModel('${m.name}')">
+          <div class="model-card" onclick="openChatPage('${m.name}')">
             <img src="${m.imageUrl}" alt="${m.name}">
             <div>
               <h3>${m.name} by ${m.creator}</h3>
@@ -617,7 +647,7 @@
       let models = getData('userModels') || [];
       models = models.filter(m => m.published);
       document.getElementById('published-models').innerHTML = models.map(m => `
-        <div class="model-card" onclick="startChatWithModel('${m.name}')">
+        <div class="model-card" onclick="openChatPage('${m.name}')">
           <img src="${m.imageUrl}" alt="${m.name}">
           <div>
             <h3>${m.name} by ${m.creator}</h3>
@@ -628,10 +658,61 @@
       `).join('');
     }
 
-    function startChatWithModel(name) {
-      currentChatModel = name;
-      document.getElementById('chat-window').innerHTML = '';
-      appendChatMessage(`Chatting with ${name}`);
+    function openChatPage(modelName) {
+      currentChatModel = modelName;
+      const chatWindow = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Chat with ${modelName}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #1a1a1a; color: #fff; display: flex; flex-direction: column; height: 100vh; }
+            .chat-container { flex: 1; padding: 20px; overflow-y: auto; }
+            .message { max-width: 70%; margin: 5px; padding: 10px; border-radius: 10px; }
+            .user-message { background-color: #ff4b4b; align-self: flex-end; }
+            .ai-message { background-color: #333; align-self: flex-start; }
+            .input-area { padding: 10px; background: #000; }
+            input { width: 70%; padding: 8px; margin-right: 10px; }
+            button { padding: 8px 16px; }
+          </style>
+        </head>
+        <body>
+          <div class="chat-container" id="chat-content"></div>
+          <div class="input-area">
+            <input type="text" id="chat-input" placeholder="Type message...">
+            <button onclick="sendChatMessage()">Send</button>
+          </div>
+          <script>
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            function appendChatMessage(msg, isUser = false) {
+              const content = document.getElementById('chat-content');
+              const div = document.createElement('div');
+              div.className = 'message ' + (isUser ? 'user-message' : 'ai-message');
+              div.innerText = msg;
+              content.appendChild(div);
+              content.scrollTop = content.scrollHeight;
+            }
+            chatHistory.filter(h => h.model === '${modelName}').forEach(h => appendChatMessage(h.message, true));
+            function sendChatMessage() {
+              const input = document.getElementById('chat-input');
+              const message = input.value;
+              if (message) {
+                appendChatMessage('You: ' + message, true);
+                appendChatMessage('${modelName}: Mock response to "' + message + '"');
+                chatHistory.push({ model: '${modelName}', message: 'You: ' + message });
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                input.value = '';
+              }
+            }
+          </script>
+        </body>
+        </html>
+      `;
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(chatWindow);
+      newWindow.document.close();
     }
 
     function likeModel(name) {
@@ -659,17 +740,20 @@
       const input = document.getElementById('chat-input');
       const message = input.value;
       if (message && currentChatModel) {
-        appendChatMessage('You: ' + message);
+        appendChatMessage('You: ' + message, true);
         appendChatMessage(`${currentChatModel}: Mock response to "${message}"`);
-        chatHistory.push({ model: currentChatModel, message });
+        chatHistory.push({ model: currentChatModel, message: 'You: ' + message });
         saveData('chatHistory', chatHistory);
         input.value = '';
       }
     }
 
-    function appendChatMessage(msg) {
+    function appendChatMessage(msg, isUser = false) {
       const window = document.getElementById('chat-window');
-      window.innerHTML += `<p>${msg}</p>`;
+      const div = document.createElement('div');
+      div.className = 'message ' + (isUser ? 'user-message' : 'ai-message');
+      div.innerText = msg;
+      window.appendChild(div);
       window.scrollTop = window.scrollHeight;
     }
 
