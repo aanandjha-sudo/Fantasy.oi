@@ -116,7 +116,7 @@
       display: block; 
     }
     .card { 
-      background: rgba(51, 51, 51, 0.8); /* Semi-transparent for background visibility */
+      background: rgba(51, 51, 51, 0.8); 
       border-radius: 8px; 
       padding: 15px; 
       margin: 10px; 
@@ -140,7 +140,7 @@
       border: 1px solid #ff4b4b; 
       padding: 10px; 
       margin: 10px 0; 
-      background: rgba(0, 0, 0, 0.5); /* Dark semi-transparent */
+      background: rgba(0, 0, 0, 0.5); 
       background-size: cover; 
       background-position: center; 
       position: relative;
@@ -270,7 +270,7 @@
           <span class="edit-pencil" onclick="editElement('home-card')">✏️</span>
           <h2>Welcome to AI Chat Platform</h2>
           <p>Inspired by CrushOn, SpicyChat, Talkie - Create and chat with custom AI models!</p>
-          <img src="https://source.unsplash.com/random/400x200/?ai,character" alt="Random AI Image">
+          <img src="https://source.unsplash.com/random/400x200/?ai,character" alt="Random AI Image" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
         </div>
         <div class="card">
           <h2>Published Models (Home Feed)</h2>
@@ -351,8 +351,8 @@
     <h2>Login</h2>
     <input id="login-uid" type="text" placeholder="Username (UID)">
     <input id="login-password" type="password" placeholder="Password">
-    <button onclick="showLoginFormAndCheck()">Login</button>
-    <button onclick="showSignupForm()">Signup</button>
+    <button id="login-btn">Login</button>
+    <button id="signup-btn">Signup</button>
     <p id="login-error" style="color: #ff4b4b; display: none;">Wrong UID or Password</p>
   </div>
 
@@ -360,26 +360,36 @@
     <h2>Signup</h2>
     <input id="signup-uid" type="text" placeholder="Create Username (UID)">
     <input id="signup-password" type="password" placeholder="Create Password">
-    <button onclick="signup()">Signup</button>
-    <button onclick="showLoginForm()">Back to Login</button>
+    <button id="signup-submit-btn">Signup</button>
+    <button id="signup-back-btn">Back to Login</button>
     <p id="signup-error" style="color: #ff4b4b; display: none;">UID already exists</p>
   </div>
 
   <script>
-    let currentUser = null;
+    let currentUser = getData('currentUser') || null;
     let currentChatModel = null;
-    let chatHistory = [];
+    let chatHistory = getData('chatHistory') || [];
     const globalStyles = getData('globalStyles') || {};
-    const users = getData('users') || []; // Stored users for login
+    let users = getData('users') || []; // Initialize users from localStorage or empty array
 
-    // Show login on load
+    // Show login or platform on load
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('login-form').style.display = 'block';
+      if (!currentUser) {
+        document.getElementById('login-form').style.display = 'block';
+      } else {
+        initAfterLogin();
+      }
       applyGlobalStyles();
-      showTab('user'); // Default to user mode on load
+      showTab('user'); // Default to user mode
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.menu-container')) toggleMenu(false);
       });
+
+      // Add event listeners for login/signup forms
+      document.getElementById('login-btn').addEventListener('click', showLoginFormAndCheck);
+      document.getElementById('signup-btn').addEventListener('click', showSignupForm);
+      document.getElementById('signup-submit-btn').addEventListener('click', signup);
+      document.getElementById('signup-back-btn').addEventListener('click', showLoginForm);
     });
 
     // Menu toggle
@@ -423,9 +433,15 @@
 
     // Signup function
     function signup() {
-      const uid = document.getElementById('signup-uid').value;
-      const password = document.getElementById('signup-password').value;
+      const uid = document.getElementById('signup-uid').value.trim();
+      const password = document.getElementById('signup-password').value.trim();
+      if (!uid || !password) {
+        document.getElementById('signup-error').innerText = 'UID and Password cannot be empty';
+        document.getElementById('signup-error').style.display = 'block';
+        return;
+      }
       if (users.find(u => u.uid === uid)) {
+        document.getElementById('signup-error').innerText = 'UID already exists';
         document.getElementById('signup-error').style.display = 'block';
         return;
       }
@@ -437,8 +453,8 @@
 
     // Login function
     function showLoginFormAndCheck() {
-      const uid = document.getElementById('login-uid').value;
-      const password = document.getElementById('login-password').value;
+      const uid = document.getElementById('login-uid').value.trim();
+      const password = document.getElementById('login-password').value.trim();
       const banned = getData('bannedUsers') || [];
       if (banned.includes(uid)) return alert('You are banned.');
 
@@ -498,7 +514,7 @@
 
     // Local storage
     function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-    function getData(key) { return JSON.parse(localStorage.getItem(key)); }
+    function getData(key) { return JSON.parse(localStorage.getItem(key)) || null; }
 
     // Edit element
     function editElement(id) {
@@ -513,21 +529,21 @@
           applyGlobalStyles();
         }
       } else if (type === 'image') {
-        const newImg = prompt('New image URL:');
-        if (newImg) {
-          const img = elem.querySelector('img');
-          if (img) img.src = newImg;
+        const newImg = prompt('New image URL:') || 'https://source.unsplash.com/random/400x200/?ai,character';
+        const img = elem.querySelector('img');
+        if (img) {
+          img.src = newImg;
+          img.onload = () => img.style.opacity = 1;
+          img.style.opacity = 0;
+          img.style.transition = 'opacity 0.5s';
           globalStyles[id + '-img'] = newImg;
           saveData('globalStyles', globalStyles);
-          applyGlobalStyles();
         }
       } else if (type === 'background') {
-        const newBg = prompt('New background image URL:');
-        if (newBg) {
-          document.body.style.backgroundImage = `url(${newBg})`;
-          globalStyles['body-bg'] = newBg;
-          saveData('globalStyles', globalStyles);
-        }
+        const newBg = prompt('New background image URL:') || 'https://source.unsplash.com/random/1920x1080/?ai,futuristic,dark';
+        document.body.style.backgroundImage = `url(${newBg})`;
+        globalStyles['body-bg'] = newBg;
+        saveData('globalStyles', globalStyles);
       } else if (type === 'title') {
         const newTitle = prompt('New title/announcement:', elem.querySelector('h2') ? elem.querySelector('h2').innerText : '');
         if (newTitle) {
@@ -547,7 +563,12 @@
           if (type === 'text' && elem.innerText) elem.innerText = globalStyles[key];
           if (type === 'img') {
             const img = elem.querySelector('img');
-            if (img) img.src = globalStyles[key];
+            if (img) {
+              img.src = globalStyles[key];
+              img.onload = () => img.style.opacity = 1;
+              img.style.opacity = 0;
+              img.style.transition = 'opacity 0.5s';
+            }
           }
           if (type === 'title') {
             const title = elem.querySelector('h2') || elem;
@@ -567,12 +588,12 @@
 
     // User functions
     function createAIModel() {
-      const name = document.getElementById('model-name').value;
-      const desc = document.getElementById('model-desc').value;
-      const personality = document.getElementById('model-personality').value;
-      const traits = document.getElementById('model-traits').value.split(',');
-      const category = document.getElementById('model-category').value;
-      const tags = document.getElementById('model-tags').value.split(',');
+      const name = document.getElementById('model-name').value.trim();
+      const desc = document.getElementById('model-desc').value.trim();
+      const personality = document.getElementById('model-personality').value.trim();
+      const traits = document.getElementById('model-traits').value.split(',').map(t => t.trim());
+      const category = document.getElementById('model-category').value.trim();
+      const tags = document.getElementById('model-tags').value.split(',').map(t => t.trim());
       const file = document.getElementById('model-image').files[0];
       let imageUrl = 'https://source.unsplash.com/random/100x100/?character';
       if (file) {
@@ -588,6 +609,7 @@
     }
 
     function addModel(name, desc, personality, traits, category, tags, imageUrl) {
+      if (!name || !desc) return alert('Name and description are required');
       let models = getData('userModels') || [];
       models.push({ name, desc, personality, traits, category, tags, imageUrl, published: false, likes: 0, creator: currentUser.uid });
       saveData('userModels', models);
@@ -610,7 +632,7 @@
       models = models.filter(m => m.creator === currentUser.uid);
       document.getElementById('user-models').innerHTML = models.map(m => `
         <div class="model-card" onclick="openChatPage('${m.name}')">
-          <img src="${m.imageUrl}" alt="${m.name}">
+          <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
           <div>
             <h3>${m.name}</h3>
             <p>${m.desc}</p>
@@ -630,7 +652,7 @@
         models = models.filter(m => m.published);
         document.getElementById('home-published-models').innerHTML = models.map(m => `
           <div class="model-card" onclick="openChatPage('${m.name}')">
-            <img src="${m.imageUrl}" alt="${m.name}">
+            <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
             <div>
               <h3>${m.name} by ${m.creator}</h3>
               <p>${m.desc}</p>
@@ -648,7 +670,7 @@
       models = models.filter(m => m.published);
       document.getElementById('published-models').innerHTML = models.map(m => `
         <div class="model-card" onclick="openChatPage('${m.name}')">
-          <img src="${m.imageUrl}" alt="${m.name}">
+          <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
           <div>
             <h3>${m.name} by ${m.creator}</h3>
             <p>Likes: ${m.likes}</p>
@@ -706,9 +728,9 @@
                 input.value = '';
               }
             }
-      
-    
-
+          </script>
+        </body>
+        </html>
       `;
       const newWindow = window.open('', '_blank');
       newWindow.document.write(chatWindow);
@@ -730,7 +752,7 @@
       models = models.filter(m => m.published).sort((a, b) => b.likes - a.likes);
       document.getElementById('ranking-list').innerHTML = models.map(m => `
         <div class="model-card">
-          <img src="${m.imageUrl}" alt="${m.name}">
+          <img src="${m.imageUrl}" alt="${m.name}" onload="this.style.opacity=1" style="opacity:0; transition:opacity 0.5s">
           <h3>${m.name} by ${m.creator} - Likes: ${m.likes}</h3>
         </div>
       `).join('');
@@ -738,7 +760,7 @@
 
     function sendChatMessage() {
       const input = document.getElementById('chat-input');
-      const message = input.value;
+      const message = input.value.trim();
       if (message && currentChatModel) {
         appendChatMessage('You: ' + message, true);
         appendChatMessage(`${currentChatModel}: Mock response to "${message}"`);
@@ -766,7 +788,10 @@
       const file = document.getElementById('bg-image').files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
+        reader.onload = (e) => {
+          document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
+          document.getElementById('chat-window').style.backgroundSize = 'cover';
+        };
         reader.readAsDataURL(file);
       }
     }
@@ -793,7 +818,7 @@
               renderer.render(scene, camera);
             }
             animate();
-          });
+          }, undefined, () => alert('Error loading 3D model'));
           let user3d = getData('user3d') || [];
           user3d.push(e.target.result);
           saveData('user3d', user3d);
@@ -871,7 +896,6 @@
         const reader = new FileReader();
         reader.onload = (e) => {
           saveData('platform3d', e.target.result);
-          // Render if needed
         };
         reader.readAsDataURL(file);
       }
