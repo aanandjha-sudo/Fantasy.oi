@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Chatbot Platform</title>
+  <style>
+    body { font-family: Arial, sans-serif; width: 400px; padding: 10px; margin: 0; }
+    .tab { display: none; }
+    .active { display: block; }
+    button { margin: 5px; }
+    #chat-window { height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 5px; }
+    #3d-container { width: 100%; height: 200px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>AI Chatbot Platform</h1>
+  <div id="user" class="tab">
+    <h2>User Dashboard</h2>
+    <button onclick="createAIModel()">Create AI Model</button>
+    <button onclick="publishAIModel()">Publish Model</button>
+    <button onclick="changeChatBackground()">Change Chat Background</button>
+    <button onclick="donate()">Donate</button>
+    <button onclick="subscribe()">Subscribe</button>
+    <div>
+      <h3>Chat with AI</h3>
+      <div id="chat-window"></div>
+      <input id="chat-input" type="text" placeholder="Type message...">
+      <button onclick="sendChatMessage()">Send</button>
+    </div>
+    <div id="user-models"></div>
+  </div>
+  <div id="admin" class="tab">
+    <h2>Admin/Host Dashboard</h2>
+    <input id="bank-account" type="text" placeholder="Add Bank Account">
+    <button onclick="addBankAccount()">Save Bank</button>
+    <input id="assign-admin" type="text" placeholder="Assign Admin (username)">
+    <button onclick="assignAdmin()">Assign</button>
+    <button onclick="removeAdmin()">Remove Admin</button>
+    <input id="3d-model" type="file" accept=".glb,.gltf">
+    <button onclick="add3DModel()">Add 3D Model</button>
+    <div id="3d-container"></div>
+    <h3>Customize Page</h3>
+    <input id="custom-text" type="text" placeholder="Change Text">
+    <input id="custom-image" type="file" accept="image/*">
+    <button onclick="customizePage()">Apply Changes</button>
+    <div id="admin-info"></div>
+  </div>
+  <script>
+    // Three.js embedded (simplified, use full library in production)
+    const THREE = { Scene: class {}, PerspectiveCamera: class {}, WebGLRenderer: class {}, BoxGeometry: class {}, MeshBasicMaterial: class {}, Mesh: class {} }; // Mock for demo
+
+    // URL-based role detection
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role') || 'user';
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById(role).classList.add('active');
+      if (role !== 'admin' && role !== 'host') document.getElementById('admin').style.display = 'none';
+    });
+
+    // Local storage helpers
+    function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function getData(key, callback) { callback(JSON.parse(localStorage.getItem(key)) || null); }
+
+    // User Mode Functions
+    function createAIModel() {
+      const name = prompt('Enter AI Model Name:');
+      if (name) {
+        getData('userModels', (models = []) => {
+          models.push({ name, published: false });
+          saveData('userModels', models);
+          updateUserModels();
+        });
+      }
+    }
+
+    function publishAIModel() {
+      getData('userModels', (models = []) => {
+        const toPublish = prompt('Enter model name to publish:');
+        const model = models.find(m => m.name === toPublish);
+        if (model) model.published = true;
+        saveData('userModels', models);
+        updateUserModels();
+      });
+    }
+
+    function updateUserModels() {
+      getData('userModels', (models = []) => {
+        document.getElementById('user-models').innerHTML = models.map(m => `<p>${m.name} - ${m.published ? 'Published' : 'Draft'}</p>`).join('');
+      });
+    }
+
+    function changeChatBackground() {
+      const color = prompt('Enter background color (e.g., #fff):');
+      if (color) document.getElementById('chat-window').style.backgroundColor = color;
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value;
+      if (message) {
+        appendChatMessage('You: ' + message);
+        appendChatMessage('AI: Hello! This is a mock response to "' + message + '".');
+        input.value = '';
+      }
+    }
+
+    function appendChatMessage(msg) {
+      const window = document.getElementById('chat-window');
+      window.innerHTML += `<p>${msg}</p>`;
+      window.scrollTop = window.scrollHeight;
+    }
+
+    function donate() { alert('Opening donation link... (Use Stripe in production)'); window.open('https://stripe.com/donate'); }
+    function subscribe() { alert('Subscribing... (Mock)'); saveData('subscribed', true); }
+
+    // Admin Mode Functions
+    function addBankAccount() {
+      const account = document.getElementById('bank-account').value;
+      if (account && (role === 'host' || role === 'admin')) {
+        saveData('bankAccount', account);
+        updateAdminInfo();
+      }
+    }
+
+    function assignAdmin() {
+      const username = document.getElementById('assign-admin').value;
+      if (username && role === 'host') {
+        getData('admins', (admins = []) => {
+          admins.push(username);
+          saveData('admins', admins);
+          updateAdminInfo();
+        });
+      }
+    }
+
+    function removeAdmin() {
+      const username = prompt('Enter admin username to remove:');
+      if (username && role === 'host') {
+        getData('admins', (admins = []) => {
+          admins = admins.filter(a => a !== username);
+          saveData('admins', admins);
+          updateAdminInfo();
+        });
+      }
+    }
+
+    function add3DModel() {
+      const fileInput = document.getElementById('3d-model');
+      const file = fileInput.files[0];
+      if (file && (role === 'host' || role === 'admin')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          saveData('3dModel', e.target.result);
+          render3DModel();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function render3DModel() {
+      getData('3dModel', (modelData) => {
+        if (modelData && (role === 'host' || role === 'admin')) {
+          const container = document.getElementById('3d-container');
+          container.innerHTML = '';
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+          const renderer = new THREE.WebGLRenderer();
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          container.appendChild(renderer.domElement);
+
+          const geometry = new THREE.BoxGeometry();
+          const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          const cube = new THREE.Mesh(geometry, material);
+          scene.add(cube);
+          camera.position.z = 5;
+
+          function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            renderer.render(scene, camera);
+          }
+          animate();
+        }
+      });
+    }
+
+    function customizePage() {
+      const text = document.getElementById('custom-text').value;
+      const imageInput = document.getElementById('custom-image');
+      if ((role === 'host' || role === 'admin') && text) document.body.innerHTML += `<p>Custom Text: ${text}</p>`;
+      if (imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.width = 100;
+          document.body.appendChild(img);
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      }
+    }
+
+    function updateAdminInfo() {
+      getData('bankAccount', (account) => {
+        getData('admins', (admins = []) => {
+          document.getElementById('admin-info').innerHTML = `
+            <p>Bank Account: ${account || 'None'}</p>
+            <p>Admins: ${admins.join(', ') || 'None'}</p>
+          `;
+        });
+      });
+    }
+
+    // Init
+    updateUserModels();
+    if (role === 'admin' || role === 'host') updateAdminInfo();
+    if (role === 'admin' || role === 'host') render3DModel();
+  </script>
+</body>
+  </html>
