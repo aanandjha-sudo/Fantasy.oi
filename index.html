@@ -2,91 +2,277 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Chatbot Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chatbot Platform - Inspired by CrushOn AI</title>
   <style>
-    body { font-family: Arial, sans-serif; width: 400px; padding: 10px; margin: 0; }
-    .tab { display: none; }
-    .active { display: block; }
-    button { margin: 5px; }
-    #chat-window { height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 5px; }
-    #3d-container { width: 100%; height: 200px; border: 1px solid #ccc; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      width: 100vw; 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      background-color: #f0f0f0; 
+      color: #333; 
+    }
+    nav { 
+      background-color: #333; 
+      color: white; 
+      padding: 10px; 
+      display: flex; 
+      justify-content: space-around; 
+    }
+    nav button { 
+      background: none; 
+      border: none; 
+      color: white; 
+      cursor: pointer; 
+    }
+    .container { 
+      flex: 1; 
+      display: flex; 
+      padding: 20px; 
+      overflow: auto; 
+    }
+    .tab { 
+      display: none; 
+      width: 100%; 
+    }
+    .active { 
+      display: block; 
+    }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      padding: 15px; 
+      margin: 10px; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    }
+    #chat-window { 
+      height: 400px; 
+      overflow-y: scroll; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      margin: 10px 0; 
+      background-size: cover; 
+      background-position: center; 
+    }
+    #3d-chat-bg { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      z-index: -1; 
+    }
+    button { 
+      background-color: #ff4b4b; 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      margin: 5px; 
+    }
+    input, select { 
+      padding: 8px; 
+      margin: 5px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+    }
+    #ranking { 
+      margin-top: 20px; 
+    }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
-  <h1>AI Chatbot Platform</h1>
-  <div id="user" class="tab">
-    <h2>User Dashboard</h2>
-    <button onclick="createAIModel()">Create AI Model</button>
-    <button onclick="publishAIModel()">Publish Model</button>
-    <button onclick="changeChatBackground()">Change Chat Background</button>
-    <button onclick="donate()">Donate</button>
-    <button onclick="subscribe()">Subscribe</button>
-    <div>
-      <h3>Chat with AI</h3>
-      <div id="chat-window"></div>
-      <input id="chat-input" type="text" placeholder="Type message...">
-      <button onclick="sendChatMessage()">Send</button>
+  <nav>
+    <button onclick="showTab('user')">User Mode</button>
+    <button onclick="showTab('admin')">Admin/Host Mode</button>
+    <button onclick="showRanking()">View Rankings</button>
+  </nav>
+  <div class="container">
+    <div id="user" class="tab">
+      <div class="card">
+        <h2>Create AI Model</h2>
+        <input id="model-name" type="text" placeholder="Model Name">
+        <input id="model-desc" type="text" placeholder="Description">
+        <input id="model-personality" type="text" placeholder="Personality (e.g., friendly, sassy)">
+        <input id="model-traits" type="text" placeholder="Traits (comma-separated)">
+        <button onclick="createAIModel()">Create</button>
+      </div>
+      <div class="card">
+        <h2>Published Models</h2>
+        <div id="user-models"></div>
+        <button onclick="publishAIModel()">Publish Selected</button>
+      </div>
+      <div class="card">
+        <h2>Chat with AI</h2>
+        <div id="chat-window" style="position: relative;">
+          <div id="3d-chat-bg"></div>
+        </div>
+        <input id="chat-input" type="text" placeholder="Type message...">
+        <button onclick="sendChatMessage()">Send</button>
+        <input id="bg-image" type="file" accept="image/*">
+        <button onclick="setChatBackgroundImage()">Set Image Background</button>
+        <input id="bg-3d" type="file" accept=".glb,.gltf">
+        <button onclick="setChatBackground3D()">Set 3D Background</button>
+      </div>
+      <div class="card">
+        <button onclick="donate()">Donate</button>
+        <button onclick="subscribe()">Subscribe</button>
+      </div>
+      <div id="ranking" class="card" style="display: none;">
+        <h2>Top Model Creators</h2>
+        <div id="ranking-list"></div>
+      </div>
     </div>
-    <div id="user-models"></div>
-  </div>
-  <div id="admin" class="tab">
-    <h2>Admin/Host Dashboard</h2>
-    <input id="bank-account" type="text" placeholder="Add Bank Account">
-    <button onclick="addBankAccount()">Save Bank</button>
-    <input id="assign-admin" type="text" placeholder="Assign Admin (username)">
-    <button onclick="assignAdmin()">Assign</button>
-    <button onclick="removeAdmin()">Remove Admin</button>
-    <input id="3d-model" type="file" accept=".glb,.gltf">
-    <button onclick="add3DModel()">Add 3D Model</button>
-    <div id="3d-container"></div>
-    <h3>Customize Page</h3>
-    <input id="custom-text" type="text" placeholder="Change Text">
-    <input id="custom-image" type="file" accept="image/*">
-    <button onclick="customizePage()">Apply Changes</button>
-    <div id="admin-info"></div>
-  </div>
-  <script>
-    // Three.js embedded (simplified, use full library in production)
-    const THREE = { Scene: class {}, PerspectiveCamera: class {}, WebGLRenderer: class {}, BoxGeometry: class {}, MeshBasicMaterial: class {}, Mesh: class {} }; // Mock for demo
 
-    // URL-based role detection
-    const urlParams = new URLSearchParams(window.location.search);
-    const role = urlParams.get('role') || 'user';
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById(role).classList.add('active');
-      if (role !== 'admin' && role !== 'host') document.getElementById('admin').style.display = 'none';
-    });
+    <div id="admin" class="tab">
+      <div class="card">
+        <h2>Host Settings</h2>
+        <input id="ai-api-key" type="text" placeholder="Connect AI API Key (e.g., Grok/OpenAI)">
+        <button onclick="connectAI()">Connect AI</button>
+        <input id="upi-id" type="text" placeholder="UPI ID (e.g., user@upi)">
+        <input id="upi-qr" type="file" accept="image/*">
+        <button onclick="savePaymentDetails()">Save Payment Details</button>
+      </div>
+      <div class="card">
+        <h2>Admin Management</h2>
+        <input id="assign-admin" type="text" placeholder="Assign Admin (username)">
+        <button onclick="assignAdmin()">Assign</button>
+        <button onclick="removeAdmin()">Remove Admin</button>
+      </div>
+      <div class="card">
+        <h2>Customize Platform</h2>
+        <input id="custom-text" type="text" placeholder="Change Text">
+        <input id="custom-image" type="file" accept="image/*">
+        <button onclick="customizePage()">Apply Changes</button>
+      </div>
+      <div class="card">
+        <h2>3D Model for Platform</h2>
+        <input id="3d-model" type="file" accept=".glb,.gltf">
+        <button onclick="add3DModel()">Add 3D Model</button>
+        <div id="3d-container" style="width: 100%; height: 200px;"></div>
+      </div>
+      <div id="admin-info" class="card"></div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      document.getElementById('ranking').style.display = 'none';
+    }
+
+    function showRanking() {
+      showTab('user');
+      document.getElementById('ranking').style.display = 'block';
+      updateRanking();
+    }
 
     // Local storage helpers
     function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-    function getData(key, callback) { callback(JSON.parse(localStorage.getItem(key)) || null); }
+    function getData(key) { return JSON.parse(localStorage.getItem(key)) || null; }
 
     // User Mode Functions
     function createAIModel() {
-      const name = prompt('Enter AI Model Name:');
+      const name = document.getElementById('model-name').value;
+      const desc = document.getElementById('model-desc').value;
+      const personality = document.getElementById('model-personality').value;
+      const traits = document.getElementById('model-traits').value.split(',');
       if (name) {
-        getData('userModels', (models = []) => {
-          models.push({ name, published: false });
-          saveData('userModels', models);
-          updateUserModels();
-        });
+        let models = getData('userModels') || [];
+        models.push({ name, desc, personality, traits, published: false, likes: 0 });
+        saveData('userModels', models);
+        updateUserModels();
       }
     }
 
     function publishAIModel() {
-      getData('userModels', (models = []) => {
-        const toPublish = prompt('Enter model name to publish:');
-        const model = models.find(m => m.name === toPublish);
-        if (model) model.published = true;
-        saveData('userModels', models);
-        updateUserModels();
-      });
+      let models = getData('userModels') || [];
+      const toPublish = prompt('Enter model name to publish:');
+      const model = models.find(m => m.name === toPublish);
+      if (model) model.published = true;
+      saveData('userModels', models);
+      updateUserModels();
     }
 
     function updateUserModels() {
-      getData('userModels', (models = []) => {
-        document.getElementById('user-models').innerHTML = models.map(m => `<p>${m.name} - ${m.published ? 'Published' : 'Draft'}</p>`).join('');
-      });
+      let models = getData('userModels') || [];
+      document.getElementById('user-models').innerHTML = models.map(m => `
+        <div class="card">
+          <h3>${m.name}</h3>
+          <p>${m.desc}</p>
+          <p>Personality: ${m.personality}</p>
+          <p>Traits: ${m.traits.join(', ')}</p>
+          <p>Likes: ${m.likes}</p>
+          <button onclick="likeModel('${m.name}')">Like</button>
+          <p>${m.published ? 'Published' : 'Draft'}</p>
+        </div>
+      `).join('');
+    }
+
+    function likeModel(name) {
+      let models = getData('userModels') || [];
+      const model = models.find(m => m.name === name);
+      if (model) model.likes++;
+      saveData('userModels', models);
+      updateUserModels();
+      updateRanking();
+    }
+
+    function updateRanking() {
+      let models = getData('userModels') || [];
+      models.sort((a, b) => b.likes - a.likes);
+      document.getElementById('ranking-list').innerHTML = models.slice(0, 5).map(m => `<p>${m.name} - Likes: ${m.likes}</p>`).join('');
+    }
+
+    function setChatBackgroundImage() {
+      const fileInput = document.getElementById('bg-image');
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function setChatBackground3D() {
+      const fileInput = document.getElementById('bg-3d');
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const container = document.getElementById('3d-chat-bg');
+          container.innerHTML = '';
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          const renderer = new THREE.WebGLRenderer({ alpha: true });
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          container.appendChild(renderer.domElement);
+
+          const loader = new THREE.GLTFLoader();
+          loader.load(e.target.result, (gltf) => {
+            scene.add(gltf.scene);
+            camera.position.z = 5;
+            function animate() {
+              requestAnimationFrame(animate);
+              gltf.scene.rotation.y += 0.01;
+              renderer.render(scene, camera);
+            }
+            animate();
+          });
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
     function changeChatBackground() {
@@ -99,7 +285,9 @@
       const message = input.value;
       if (message) {
         appendChatMessage('You: ' + message);
-        appendChatMessage('AI: Hello! This is a mock response to "' + message + '".');
+        // Mock AI (use connected API in production)
+        const apiKey = getData('aiApiKey');
+        appendChatMessage('AI: ' + (apiKey ? 'Response from connected AI: ' : 'Mock response to ') + message);
         input.value = '';
       }
     }
@@ -110,44 +298,51 @@
       window.scrollTop = window.scrollHeight;
     }
 
-    function donate() { alert('Opening donation link... (Use Stripe in production)'); window.open('https://stripe.com/donate'); }
+    function donate() { alert('Donating via UPI... (Mock)'); }
     function subscribe() { alert('Subscribing... (Mock)'); saveData('subscribed', true); }
 
     // Admin Mode Functions
-    function addBankAccount() {
-      const account = document.getElementById('bank-account').value;
-      if (account && (role === 'host' || role === 'admin')) {
-        saveData('bankAccount', account);
-        updateAdminInfo();
+    function connectAI() {
+      const apiKey = document.getElementById('ai-api-key').value;
+      if (apiKey) saveData('aiApiKey', apiKey);
+    }
+
+    function savePaymentDetails() {
+      const upiId = document.getElementById('upi-id').value;
+      const qrFile = document.getElementById('upi-qr').files[0];
+      if (upiId) saveData('upiId', upiId);
+      if (qrFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => saveData('upiQr', e.target.result);
+        reader.readAsDataURL(qrFile);
       }
+      updateAdminInfo();
     }
 
     function assignAdmin() {
       const username = document.getElementById('assign-admin').value;
-      if (username && role === 'host') {
-        getData('admins', (admins = []) => {
-          admins.push(username);
-          saveData('admins', admins);
-          updateAdminInfo();
-        });
+      if (username) {
+        let admins = getData('admins') || [];
+        admins.push(username);
+        saveData('admins', admins);
+        updateAdminInfo();
       }
     }
 
     function removeAdmin() {
       const username = prompt('Enter admin username to remove:');
-      if (username && role === 'host') {
-        getData('admins', (admins = []) => {
-          admins = admins.filter(a => a !== username);
-          saveData('admins', admins);
-          updateAdminInfo();
-        });
+      if (username) {
+        let admins = getData('admins') || [];
+        admins = admins.filter(a => a !== username);
+        saveData('admins', admins);
+        updateAdminInfo();
       }
     }
 
     function add3DModel() {
       const fileInput = document.getElementById('3d-model');
       const file = fileInput.files[0];
-      if (file && (role === 'host' || role === 'admin')) {
+      if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
           saveData('3dModel', e.target.result);
@@ -158,37 +353,34 @@
     }
 
     function render3DModel() {
-      getData('3dModel', (modelData) => {
-        if (modelData && (role === 'host' || role === 'admin')) {
-          const container = document.getElementById('3d-container');
-          container.innerHTML = '';
-          const scene = new THREE.Scene();
-          const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-          const renderer = new THREE.WebGLRenderer();
-          renderer.setSize(container.clientWidth, container.clientHeight);
-          container.appendChild(renderer.domElement);
+      const modelData = getData('3dModel');
+      if (modelData) {
+        const container = document.getElementById('3d-container');
+        container.innerHTML = '';
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
 
-          const geometry = new THREE.BoxGeometry();
-          const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-          const cube = new THREE.Mesh(geometry, material);
-          scene.add(cube);
+        const loader = new THREE.GLTFLoader();
+        loader.load(modelData, (gltf) => {
+          scene.add(gltf.scene);
           camera.position.z = 5;
-
           function animate() {
             requestAnimationFrame(animate);
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
+            gltf.scene.rotation.y += 0.01;
             renderer.render(scene, camera);
           }
           animate();
-        }
-      });
+        });
+      }
     }
 
     function customizePage() {
       const text = document.getElementById('custom-text').value;
       const imageInput = document.getElementById('custom-image');
-      if ((role === 'host' || role === 'admin') && text) document.body.innerHTML += `<p>Custom Text: ${text}</p>`;
+      if (text) document.body.innerHTML += `<p style="color: red;">Custom Text: ${text}</p>`;
       if (imageInput.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -202,20 +394,20 @@
     }
 
     function updateAdminInfo() {
-      getData('bankAccount', (account) => {
-        getData('admins', (admins = []) => {
-          document.getElementById('admin-info').innerHTML = `
-            <p>Bank Account: ${account || 'None'}</p>
-            <p>Admins: ${admins.join(', ') || 'None'}</p>
-          `;
-        });
-      });
+      const upiId = getData('upiId');
+      const upiQr = getData('upiQr');
+      const admins = getData('admins') || [];
+      document.getElementById('admin-info').innerHTML = `
+        <p>UPI ID: ${upiId || 'None'}</p>
+        ${upiQr ? `<img src="${upiQr}" width="100" alt="UPI QR">` : ''}
+        <p>Admins: ${admins.join(', ') || 'None'}</p>
+      `;
     }
 
     // Init
     updateUserModels();
-    if (role === 'admin' || role === 'host') updateAdminInfo();
-    if (role === 'admin' || role === 'host') render3DModel();
+    updateAdminInfo();
+    render3DModel();
   </script>
 </body>
-  </html>
+        </html>
