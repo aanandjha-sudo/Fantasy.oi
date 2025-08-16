@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,7 +91,7 @@
       padding: 20px; 
       overflow-y: auto; 
       z-index: 5;
-      scroll-behavior: smooth; /* Smooth scrolling inspired by X */
+      scroll-behavior: smooth; 
     }
     .sidebar button { 
       display: block; 
@@ -159,7 +158,7 @@
       text-align: center; 
       padding: 20px; 
       color: #ff4b4b; 
-      animation: spin 1s linear infinite; /* Loading spinner inspired by X */
+      animation: spin 1s linear infinite; 
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -183,6 +182,18 @@
       color: #fff;
     }
     #login-form { 
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      background: #333; 
+      padding: 20px; 
+      border-radius: 8px; 
+      z-index: 20; 
+      display: block;
+    }
+    #signup-form { 
+      display: none; 
       position: fixed; 
       top: 50%; 
       left: 50%; 
@@ -233,7 +244,7 @@
         <div class="menu-text">menu</div>
       </div>
       <div class="menu-dropdown" id="menu-dropdown">
-        <span class="close-menu" onclick="toggleMenu()">❌</span>
+        <span class="close-menu" onclick="toggleMenu(false)">❌</span>
         <button onclick="showSection('home')">Home</button>
         <button onclick="showSection('previous-chats')">Previous Chats</button>
         <button onclick="showSection('my-models')">My Models</button>
@@ -332,9 +343,20 @@
 
   <div id="login-form">
     <h2>Login</h2>
-    <input id="username" type="text" placeholder="Username (UID)">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+    <input id="login-uid" type="text" placeholder="Username (UID)">
+    <input id="login-password" type="password" placeholder="Password">
+    <button onclick="showLoginForm()">Login</button>
+    <button onclick="showSignupForm()">Signup</button>
+    <p id="login-error" style="color: #ff4b4b; display: none;">Wrong UID or Password</p>
+  </div>
+
+  <div id="signup-form">
+    <h2>Signup</h2>
+    <input id="signup-uid" type="text" placeholder="Create Username (UID)">
+    <input id="signup-password" type="password" placeholder="Create Password">
+    <button onclick="signup()">Signup</button>
+    <button onclick="showLoginForm()">Back to Login</button>
+    <p id="signup-error" style="color: #ff4b4b; display: none;">UID already exists</p>
   </div>
 
   <script>
@@ -365,34 +387,59 @@
       dropdown.classList.toggle('active', show);
     }
 
-    // Login functions
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+    // Form switching
+    function showLoginForm() {
+      document.getElementById('login-form').style.display = 'block';
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('login-error').style.display = 'none';
+    }
+
+    function showSignupForm() {
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('signup-form').style.display = 'block';
+      document.getElementById('signup-error').style.display = 'none';
+    }
+
+    // Signup function
+    function signup() {
+      const uid = document.getElementById('signup-uid').value;
+      const password = document.getElementById('signup-password').value;
+      if (users.find(u => u.uid === uid)) {
+        document.getElementById('signup-error').style.display = 'block';
+        return;
+      }
+      users.push({ uid, password });
+      saveData('users', users);
+      alert('Signup successful! Please login.');
+      showLoginForm();
+    }
+
+    // Login function
+    function showLoginFormAndCheck() {
+      const uid = document.getElementById('login-uid').value;
+      const password = document.getElementById('login-password').value;
       const banned = getData('bannedUsers') || [];
-      if (banned.includes(username)) return alert('You are banned.');
-      
-      let isHost = false;
-      if (username === 'host_leader' && password === 'Akj@@8051964008') {
-        isHost = true;
+      if (banned.includes(uid)) return alert('You are banned.');
+
+      let isValid = false;
+      if (uid === 'host_leader' && password === 'Akj@@8051964008') {
+        isValid = true;
+        currentUser = { uid, role: 'host' };
       } else {
-        // Check user credentials
-        const user = users.find(u => u.uid === username && u.password === password);
-        if (!user) {
-          // Create new user if not exists
-          if (prompt('New user? Enter "yes" to create.') === 'yes') {
-            users.push({ uid: username, password });
-            saveData('users', users);
-          } else {
-            return alert('Invalid credentials');
-          }
+        const user = users.find(u => u.uid === uid && u.password === password);
+        if (user) {
+          isValid = true;
+          currentUser = { uid, role: 'user' };
         }
       }
 
-      currentUser = { uid: username, role: isHost ? 'host' : 'user' };
-      saveData('currentUser', currentUser);
-      document.getElementById('login-form').style.display = 'none';
-      initAfterLogin();
+      if (isValid) {
+        saveData('currentUser', currentUser);
+        document.getElementById('login-form').style.display = 'none';
+        initAfterLogin();
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
     }
 
     function logout() {
@@ -413,11 +460,130 @@
       document.getElementById('home-published-models').classList.remove('loading');
     }
 
-    // Other functions remain similar, with adjustments for loading and scrolling
-    // For example, add loading class when fetching data
+    // Tab and section switching
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+    }
+
+    function showSection(section) {
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      document.getElementById(section + '-section').style.display = 'block';
+    }
+
+    // Local storage
+    function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function getData(key) { return JSON.parse(localStorage.getItem(key)); }
+
+    // Edit element
+    function editElement(id) {
+      if (currentUser.role !== 'host') return;
+      const elem = document.getElementById(id);
+      const type = prompt('Edit type: text, image, font');
+      if (type === 'text') {
+        const newText = prompt('New text:', elem.innerText);
+        if (newText) {
+          globalStyles[id + '-text'] = newText;
+          saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
+        }
+      } else if (type === 'image') {
+        const newImg = prompt('New image URL:');
+        if (newImg) {
+          globalStyles[id + '-img'] = newImg;
+          saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
+        }
+      } else if (type === 'font') {
+        const newFont = prompt('New font size/color (e.g., 20px red):');
+        if (newFont) {
+          globalStyles[id + '-font'] = newFont;
+          saveData('globalStyles', globalStyles);
+          applyGlobalStyles();
+        }
+      }
+    }
+
+    function applyGlobalStyles() {
+      for (let key in globalStyles) {
+        const [id, type] = key.split('-');
+        const elem = document.getElementById(id);
+        if (elem) {
+          if (type === 'text') elem.innerText = globalStyles[key];
+          if (type === 'img') elem.querySelector('img').src = globalStyles[key];
+          if (type === 'font') elem.style.font = globalStyles[key];
+        }
+      }
+    }
+
+    function resetChanges() {
+      if (currentUser.role === 'host') {
+        saveData('globalStyles', {});
+        location.reload();
+      }
+    }
+
+    // User functions
+    function createAIModel() {
+      const name = document.getElementById('model-name').value;
+      const desc = document.getElementById('model-desc').value;
+      const personality = document.getElementById('model-personality').value;
+      const traits = document.getElementById('model-traits').value.split(',');
+      const category = document.getElementById('model-category').value;
+      const tags = document.getElementById('model-tags').value.split(',');
+      const file = document.getElementById('model-image').files[0];
+      let imageUrl = 'https://source.unsplash.com/random/100x100/?character';
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imageUrl = e.target.result;
+          addModel(name, desc, personality, traits, category, tags, imageUrl);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        addModel(name, desc, personality, traits, category, tags, imageUrl);
+      }
+    }
+
+    function addModel(name, desc, personality, traits, category, tags, imageUrl) {
+      let models = getData('userModels') || [];
+      models.push({ name, desc, personality, traits, category, tags, imageUrl, published: false, likes: 0, creator: currentUser.uid });
+      saveData('userModels', models);
+      updateUserModels();
+    }
+
+    function publishAIModel() {
+      let models = getData('userModels') || [];
+      const toPublish = prompt('Enter model name to publish:');
+      const model = models.find(m => m.name === toPublish && m.creator === currentUser.uid);
+      if (model) model.published = true;
+      saveData('userModels', models);
+      updateUserModels();
+      updateHomePublishedModels();
+      updatePublishedModels();
+    }
+
+    function updateUserModels() {
+      let models = getData('userModels') || [];
+      models = models.filter(m => m.creator === currentUser.uid);
+      document.getElementById('user-models').innerHTML = models.map(m => `
+        <div class="model-card">
+          <img src="${m.imageUrl}" alt="${m.name}">
+          <div>
+            <h3>${m.name}</h3>
+            <p>${m.desc}</p>
+            <p>Personality: ${m.personality}</p>
+            <p>Category: ${m.category}</p>
+            <p>Tags: ${m.tags.join(', ')}</p>
+            <p>${m.published ? 'Published' : 'Draft'}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
     function updateHomePublishedModels() {
       document.getElementById('home-published-models').classList.add('loading');
-      setTimeout(() => { // Simulate load
+      setTimeout(() => { 
         let models = getData('userModels') || [];
         models = models.filter(m => m.published);
         document.getElementById('home-published-models').innerHTML = models.map(m => `
@@ -432,11 +598,188 @@
           </div>
         `).join('');
         document.getElementById('home-published-models').classList.remove('loading');
-      }, 1000); // Mock delay
+      }, 1000); 
     }
 
-    // Rest of the script remains as in previous version, with deeper UI enhancements like smooth scrolling already added via CSS
+    function updatePublishedModels() {
+      let models = getData('userModels') || [];
+      models = models.filter(m => m.published);
+      document.getElementById('published-models').innerHTML = models.map(m => `
+        <div class="model-card" onclick="startChatWithModel('${m.name}')">
+          <img src="${m.imageUrl}" alt="${m.name}">
+          <div>
+            <h3>${m.name} by ${m.creator}</h3>
+            <p>Likes: ${m.likes}</p>
+            <button onclick="event.stopPropagation(); likeModel('${m.name}')">Like</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function startChatWithModel(name) {
+      currentChatModel = name;
+      document.getElementById('chat-window').innerHTML = '';
+      appendChatMessage(`Chatting with ${name}`);
+    }
+
+    function likeModel(name) {
+      let models = getData('userModels') || [];
+      const model = models.find(m => m.name === name);
+      if (model) model.likes++;
+      saveData('userModels', models);
+      updateHomePublishedModels();
+      updatePublishedModels();
+      updateRanking();
+    }
+
+    function updateRanking() {
+      let models = getData('userModels') || [];
+      models = models.filter(m => m.published).sort((a, b) => b.likes - a.likes);
+      document.getElementById('ranking-list').innerHTML = models.map(m => `
+        <div class="model-card">
+          <img src="${m.imageUrl}" alt="${m.name}">
+          <h3>${m.name} by ${m.creator} - Likes: ${m.likes}</h3>
+        </div>
+      `).join('');
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value;
+      if (message && currentChatModel) {
+        appendChatMessage('You: ' + message);
+        appendChatMessage(`${currentChatModel}: Mock response to "${message}"`);
+        chatHistory.push({ model: currentChatModel, message });
+        saveData('chatHistory', chatHistory);
+        input.value = '';
+      }
+    }
+
+    function appendChatMessage(msg) {
+      const window = document.getElementById('chat-window');
+      window.innerHTML += `<p>${msg}</p>`;
+      window.scrollTop = window.scrollHeight;
+    }
+
+    function updatePreviousChats() {
+      chatHistory = getData('chatHistory') || [];
+      document.getElementById('previous-chats').innerHTML = chatHistory.map(h => `<p>With ${h.model}: ${h.message}</p>`).join('');
+    }
+
+    function setChatBackgroundImage() {
+      const file = document.getElementById('bg-image').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => document.getElementById('chat-window').style.backgroundImage = `url(${e.target.result})`;
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function setChatBackground3D() {
+      const file = document.getElementById('bg-3d').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const container = document.getElementById('3d-chat-bg');
+          container.innerHTML = '';
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+          const renderer = new THREE.WebGLRenderer({ alpha: true });
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          container.appendChild(renderer.domElement);
+          const loader = new THREE.GLTFLoader();
+          loader.load(e.target.result, (gltf) => {
+            scene.add(gltf.scene);
+            camera.position.z = 5;
+            function animate() {
+              requestAnimationFrame(animate);
+              gltf.scene.rotation.y += 0.01;
+              renderer.render(scene, camera);
+            }
+            animate();
+          });
+          let user3d = getData('user3d') || [];
+          user3d.push(e.target.result);
+          saveData('user3d', user3d);
+          updateUser3DModels();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function updateUser3DModels() {
+      let user3d = getData('user3d') || [];
+      document.getElementById('user-3d-models').innerHTML = user3d.map((url, i) => `<p>3D Model ${i+1} <button onclick="loadUser3D('${url}')">Load</button></p>`).join('');
+    }
+
+    function loadUser3D(url) {
+      alert('Loading 3D model preview...');
+    }
+
+    function showPayment(type) {
+      const upiId = getData('upiId');
+      const upiQr = getData('upiQr');
+      document.getElementById('payment-details').innerHTML = `
+        <p>${type.charAt(0).toUpperCase() + type.slice(1)} via UPI</p>
+        <p>UPI ID: ${upiId || 'Not set'}</p>
+        ${upiQr ? `<img src="${upiQr}" width="150" alt="QR Code">` : ''}
+      `;
+      document.getElementById('payment-details').style.display = 'block';
+    }
+
+    // Host functions
+    function connectAI() {
+      const apiKey = document.getElementById('ai-api-key').value;
+      if (apiKey && currentUser.role === 'host') saveData('aiApiKey', apiKey);
+    }
+
+    function savePaymentDetails() {
+      if (currentUser.role !== 'host') return;
+      const upiId = document.getElementById('upi-id').value;
+      const qrFile = document.getElementById('upi-qr').files[0];
+      if (upiId) saveData('upiId', upiId);
+      if (qrFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => saveData('upiQr', e.target.result);
+        reader.readAsDataURL(qrFile);
+      }
+      updateAdminInfo();
+    }
+
+    function banUser() {
+      if (currentUser.role !== 'host') return;
+      const username = document.getElementById('ban-user').value;
+      if (username) {
+        let banned = getData('bannedUsers') || [];
+        banned.push(username);
+        saveData('bannedUsers', banned);
+      }
+    }
+
+    function updateAdminInfo() {
+      if (currentUser.role !== 'host') return;
+      const upiId = getData('upiId');
+      const upiQr = getData('upiQr');
+      const banned = getData('bannedUsers') || [];
+      document.getElementById('admin-info').innerHTML = `
+        <p>UPI ID: ${upiId || 'None'}</p>
+        ${upiQr ? `<img src="${upiQr}" width="100" alt="UPI QR">` : ''}
+        <p>Banned Users: ${banned.join(', ') || 'None'}</p>
+      `;
+    }
+
+    function add3DModel() {
+      if (currentUser.role !== 'host') return;
+      const file = document.getElementById('3d-model').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          saveData('platform3d', e.target.result);
+          // Render if needed
+        };
+        reader.readAsDataURL(file);
+      }
+    }
   </script>
 </body>
 </html>
-```
