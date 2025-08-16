@@ -191,6 +191,12 @@
       border-radius: 8px; 
       z-index: 20; 
       display: block;
+      transition: background-color 0.5s;
+    }
+    #login-form.success {
+      background-color: #00cc00; /* Green when successful */
+      opacity: 0;
+      transition: background-color 0.5s, opacity 0.5s;
     }
     #signup-form { 
       display: none; 
@@ -345,7 +351,7 @@
     <h2>Login</h2>
     <input id="login-uid" type="text" placeholder="Username (UID)">
     <input id="login-password" type="password" placeholder="Password">
-    <button onclick="showLoginForm()">Login</button>
+    <button onclick="showLoginFormAndCheck()">Login</button>
     <button onclick="showSignupForm()">Signup</button>
     <p id="login-error" style="color: #ff4b4b; display: none;">Wrong UID or Password</p>
   </div>
@@ -392,6 +398,7 @@
       document.getElementById('login-form').style.display = 'block';
       document.getElementById('signup-form').style.display = 'none';
       document.getElementById('login-error').style.display = 'none';
+      document.getElementById('login-form').classList.remove('success');
     }
 
     function showSignupForm() {
@@ -434,9 +441,14 @@
       }
 
       if (isValid) {
-        saveData('currentUser', currentUser);
-        document.getElementById('login-form').style.display = 'none';
-        initAfterLogin();
+        // Turn login form green and fade out
+        const loginForm = document.getElementById('login-form');
+        loginForm.classList.add('success');
+        setTimeout(() => {
+          loginForm.style.display = 'none';
+          saveData('currentUser', currentUser);
+          initAfterLogin();
+        }, 500); // Match transition duration
       } else {
         document.getElementById('login-error').style.display = 'block';
       }
