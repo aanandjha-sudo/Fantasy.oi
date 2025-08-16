@@ -376,6 +376,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       if (!currentUser) {
         document.getElementById('login-form').style.display = 'block';
+        setupLoginForm();
+        setupSignupForm();
       } else {
         initAfterLogin();
       }
@@ -384,13 +386,29 @@
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.menu-container')) toggleMenu(false);
       });
+    });
 
-      // Add event listeners for login/signup forms
+    function setupLoginForm() {
+      const loginForm = document.getElementById('login-form');
+      loginForm.addEventListener('submit', (e) => e.preventDefault()); // Prevent default form submission
       document.getElementById('login-btn').addEventListener('click', showLoginFormAndCheck);
       document.getElementById('signup-btn').addEventListener('click', showSignupForm);
+      // Allow Enter key to trigger login
+      loginForm.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') showLoginFormAndCheck();
+      });
+    }
+
+    function setupSignupForm() {
+      const signupForm = document.getElementById('signup-form');
+      signupForm.addEventListener('submit', (e) => e.preventDefault()); // Prevent default form submission
       document.getElementById('signup-submit-btn').addEventListener('click', signup);
       document.getElementById('signup-back-btn').addEventListener('click', showLoginForm);
-    });
+      // Allow Enter key to trigger signup
+      signupForm.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') signup();
+      });
+    }
 
     // Menu toggle
     function toggleMenu(show = true) {
@@ -455,8 +473,16 @@
     function showLoginFormAndCheck() {
       const uid = document.getElementById('login-uid').value.trim();
       const password = document.getElementById('login-password').value.trim();
+      if (!uid || !password) {
+        document.getElementById('login-error').innerText = 'Please enter UID and Password';
+        document.getElementById('login-error').style.display = 'block';
+        return;
+      }
       const banned = getData('bannedUsers') || [];
-      if (banned.includes(uid)) return alert('You are banned.');
+      if (banned.includes(uid)) {
+        alert('You are banned.');
+        return;
+      }
 
       let isValid = false;
       if (uid === 'host_leader' && password === 'Akj@@8051964008') {
@@ -479,6 +505,7 @@
           initAfterLogin();
         }, 500);
       } else {
+        document.getElementById('login-error').innerText = 'Wrong UID or Password';
         document.getElementById('login-error').style.display = 'block';
       }
     }
